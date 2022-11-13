@@ -1,0 +1,199 @@
+package net.mcwarlords.wlplugin;
+
+import java.util.*;
+
+import org.bukkit.*;
+
+import net.mcwarlords.wlplugin.util.*;
+import net.md_5.bungee.api.ChatColor;
+import org.bukkit.entity.*;
+import org.json.simple.JSONArray;
+
+public class Utils {
+  /** Adds section symbols and stuff to text */
+  public static String escapeText(String txt) {
+    StringBuilder sb = new StringBuilder("");
+    for(int i = 0; i < txt.length(); i++) {
+      char a = txt.charAt(i);
+      char b = i+1 < txt.length() ? txt.charAt(i+1) : '\0';
+      switch(a) {
+        case '&':
+          switch(b) {
+            case '&':
+              i++;
+              sb.append('&');
+              break;
+            case '_':
+              // Theme colors
+              if(i+2 < txt.length()) {
+                sb.append('§');
+                switch(txt.charAt(i+2)) {
+                  case 'p':
+                    sb.append(WlPlugin.prefixCol);
+                    break;
+                  case 'd':
+                    sb.append(WlPlugin.defaultCol);
+                    break;
+                  case 'e':
+                    sb.append(WlPlugin.errorCol);
+                    break;
+                  case 's':
+                    sb.append(WlPlugin.seperatorCol);
+                    break;
+                }
+              }
+              i += 2;
+              break;
+            case '#':
+              // hex colors
+              i += 2;
+              if(i+6 < txt.length()) {
+                String hex = txt.substring(i, i+6);
+                sb.append(ChatColor.of("#"+hex));
+              }
+              i += 5;
+              break;
+            default:
+              sb.append('§');
+          }
+          break;
+        case '\\':
+          i++;
+          switch(b) {
+            case 'n':
+              sb.append("\n§7... §f");
+              break;
+            case '\\':
+              sb.append("\\");
+              break;
+            default:
+              sb.append(a);
+              sb.append(b);
+          }
+          break;
+        default:
+          sb.append(a);
+      }
+    }
+    return sb.toString();
+  }
+
+  /** Gets the UUID of a player */
+  public static String getUUID(Player p) {
+    return p.getUniqueId().toString();
+  }
+
+  /** Tries to convert an object to an int.
+   * {@throws ClassCastException on failure}
+   */
+  public static int asInt(Object o) {
+    if(o instanceof Integer)
+      return (int)o;
+    else if(o instanceof Long)
+      return (int)(((Long)o).longValue());
+    else if(o instanceof Double)
+      return (int)(((Double)o).doubleValue());
+    else if(o instanceof Float)
+      return (int)(((Float)o).floatValue());
+    throw new ClassCastException();
+  }
+
+  /** Tries to convert an object to a float.
+   * {@throws ClassCastException on failure}
+   */
+  public static float asFloat(Object o) {
+    if(o instanceof Integer)
+      return (float)(((Integer)o).intValue());
+    else if(o instanceof Long)
+      return (float)(((Long)o).longValue());
+    else if(o instanceof Double)
+      return (float)(((Double)o).doubleValue());
+      else if(o instanceof Float)
+      return (float)o;
+    throw new ClassCastException();
+  }
+
+  /** Gets all players in a given channel */
+  public static Player[] playersInChannel(String channel) {
+    ArrayList<Player> players = new ArrayList<Player>();
+    for(Player p : Bukkit.getOnlinePlayers())
+      if(Data.getPlayerData(p).channel.equals(channel))
+        players.add(p);
+    return (Player[])players.toArray();
+  }
+
+  /** Get amount of players in a given channel */
+  public static int channelPlayerCount(String channel) {
+    int i = 0;
+    for(Player p : Bukkit.getOnlinePlayers())
+      if(Data.getPlayerData(p).channel.equals(channel))
+        i++;
+    return i;
+  }
+
+  /** Returns a bounding box of a plot, with the form (topleft.x, topleft.y, bottomright.x, bottomright.y) */
+  public static BoundingBox plot(int id) {
+    Point tl = new Point(WlPlugin.PLOT_SIZE*(id%10), WlPlugin.PLOT_SIZE*(id/10));
+    Point br = new Point(tl.x+(WlPlugin.PLOT_SIZE-1), tl.y+(WlPlugin.PLOT_SIZE-1));
+    return new BoundingBox(tl, br);
+  }
+
+  /** Gets all plots owned by a given player */
+  public static int[] plotsOwnedBy(Player p) {
+    String uuid = getUUID(p);
+    ArrayList<Integer> plots = new ArrayList<Integer>();
+    for(int i = 0; i < Data.plotOwners.size(); i++) {
+      if(Data.plotOwners.get(i).equals(uuid))
+        plots.add(i);
+    }
+    WlPlugin.info(Integer.toString(plots.size()));
+    int[] b = new int[plots.size()];
+    for(int i = 0; i < b.length; i++)
+      b[i] = plots.get(i);
+    return b;
+  }
+
+  /** Gets a uniform random number between two integers */
+  public static int randInt(int min, int max) {
+    return WlPlugin.rand.nextInt(max-min) + min;
+  }
+
+  /** Gets a plot id at a given coordinate */
+  public static int getPlotAt(int x, int z) {
+    if(x < 0 || x > WlPlugin.PLOT_SIZE*10 || z < 0)
+      return -1;
+    return ((z/WlPlugin.PLOT_SIZE)*10)+((x/WlPlugin.PLOT_SIZE)%10);
+  }
+
+  /** Gets a player from a UUID */
+  public static Player getPlayer(String uuid) {
+    return Bukkit.getPlayer(UUID.fromString(uuid));
+  }
+
+  public static JSONArray serializeLocation(Location loc) {
+    JSONArray arr = new JSONArray();
+    arr.add(loc.getWorld().getName());
+    arr.add(loc.getX());
+    arr.add(loc.getY());
+    arr.add(loc.getZ());
+    return arr;
+  }
+
+  public static Location deserializeLocation(Object o) {
+    JSONArray arr = (JSONArray)o;
+    return new Location(
+      Bukkit.getServer().getWorld((String)arr.get(0)),
+      Utils.asFloat(arr.get(1)),
+      Utils.asFloat(arr.get(2)),
+      Utils.asFloat(arr.get(3))
+    );
+  }
+
+  public static ArrayList<String> getSortedGames() {
+    ArrayList<String> games = new ArrayList<String>();
+    for(String s : Data.games.keySet())
+      games.add(s);
+    games.sort(String::compareToIgnoreCase);
+    return games;
+  }
+}
