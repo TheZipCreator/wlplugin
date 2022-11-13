@@ -1,0 +1,2 @@
+# wlplugin
+This is a plugin for the Warlords minecraft server, a private server for me and my online friends. It contains a few modules which do various helpful things that we'd previously use other plugins for.
