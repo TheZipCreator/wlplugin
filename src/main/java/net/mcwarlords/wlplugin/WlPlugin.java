@@ -7,6 +7,7 @@ import net.mcwarlords.wlplugin.chat.ChatModule;
 import net.mcwarlords.wlplugin.game.GameModule;
 import net.mcwarlords.wlplugin.plot.PlotModule;
 import net.mcwarlords.wlplugin.schema.SchemaModule;
+import net.mcwarlords.wlplugin.shell.ShellModule;
 
 import java.io.File;
 import java.util.*;
@@ -37,6 +38,7 @@ public class WlPlugin extends JavaPlugin {
     modules.add(new PlotModule());
     modules.add(new GameModule());
     modules.add(new SchemaModule());
+    modules.add(new ShellModule());
     for(Module m : modules)
       m.onEnable();
     // add autosave every 30 min

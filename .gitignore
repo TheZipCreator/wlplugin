@@ -1,3 +1,9 @@
 .vscode/
 target/
 include/
+*.dll
+*.lib
+*.pdb
+*.so
+*.exp
+*.obj

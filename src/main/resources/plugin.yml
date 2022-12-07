@@ -21,4 +21,10 @@ commands:
   wlschema:
     description: Interactions relating to the wlschema module. Type /wlschema help for more info
     usage: /<command> <subcommand> [args...]
+    permission: wlplugin.wlschema
     aliases: [ws, wls]
+  wlshell:
+    description: Executes wlshell commands
+    usage: /<command> <shell command>
+    permission: wlplugin.wlshell
+    aliases: [w$, wl$, $]
