@@ -6,7 +6,9 @@ import org.bukkit.scheduler.BukkitRunnable;
 import net.mcwarlords.wlplugin.chat.ChatModule;
 import net.mcwarlords.wlplugin.game.GameModule;
 import net.mcwarlords.wlplugin.plot.PlotModule;
+import net.mcwarlords.wlplugin.schema.SchemaModule;
 
+import java.io.File;
 import java.util.*;
 
 import org.bukkit.command.*;
@@ -26,7 +28,7 @@ public class WlPlugin extends JavaPlugin {
 
   @Override public void onEnable() {
     instance = this;
-    getLogger().info("WlPlugin "+VERSION+" enabled");
+    info("WlPlugin "+VERSION+" enabled");
     // create random
     rand = new Random();
     Data.onEnable();
@@ -34,6 +36,7 @@ public class WlPlugin extends JavaPlugin {
     modules.add(new ChatModule());
     modules.add(new PlotModule());
     modules.add(new GameModule());
+    modules.add(new SchemaModule());
     for(Module m : modules)
       m.onEnable();
     // add autosave every 30 min
@@ -48,7 +51,10 @@ public class WlPlugin extends JavaPlugin {
     for(Module m : modules)
       m.onDisable();
     Data.onDisable();
-    getLogger().info("WlPlugin "+VERSION+" disabled");
+    info("Deleting temporary files...");
+    for(File f : new File("plugins/wlplugin/tmp").listFiles())
+      f.delete();
+    info("WlPlugin "+VERSION+" disabled");
   }
 
   /** Add a listener to the server. */
@@ -67,7 +73,7 @@ public class WlPlugin extends JavaPlugin {
   }
 
   /** Log to warning. Equivalent to {@code WlPlugin.instance.getLogger().warning(...)} */
-  public static void warning(String s) {
+  public static void warn(String s) {
     instance.getLogger().warning(s);
   }
 

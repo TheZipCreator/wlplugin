@@ -7,14 +7,18 @@ commands:
     description: Interactions relating to the wlchat module. Type /wlchat help for more info
     usage: /<command> <subcommand> [args...]
     permission: wlplugin.wlchat
-    aliases: [wc]
+    aliases: [wc, wlc]
   wlplot:
     description: Interactions relating to the wlplot module. Type /wlplot help for more info
     usage: /<command> <subcommand> [args...]
     permission: wlplugin.wlplot
-    aliases: [wp]
+    aliases: [wp, wlp]
   wlgame:
     description: Interactions relating to the wlgame module. Type /wlgame help for more info
     usage: /<command> <subcommand> [args...]
     permission: wlplugin.wlgame
-    aliases: [wg]
+    aliases: [wg, wlg]
+  wlschema:
+    description: Interactions relating to the wlschema module. Type /wlschema help for more info
+    usage: /<command> <subcommand> [args...]
+    aliases: [ws, wls]

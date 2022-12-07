@@ -8,6 +8,9 @@ import net.mcwarlords.wlplugin.util.*;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.entity.*;
 import org.json.simple.JSONArray;
+import java.net.*;
+import java.nio.channels.*;
+import java.io.*;
 
 public class Utils {
   /** Adds section symbols and stuff to text */
@@ -195,5 +198,26 @@ public class Utils {
       games.add(s);
     games.sort(String::compareToIgnoreCase);
     return games;
+  }
+
+  /** Downloads a file from a URL and stores it to {@code path} */
+  public static void downloadTo(String urlString, String path) throws MalformedURLException, IOException {
+    URL url = new URL(urlString);
+    ReadableByteChannel rbc = Channels.newChannel(url.openStream());
+    FileOutputStream fos = new FileOutputStream(path);
+    fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+    fos.close();
+  }
+
+  /** Downloads a file and stores it to a temporary location (returned by the function) */
+  public static String downloadToTemp(String urlString) throws MalformedURLException, IOException {
+    String path = "plugins/wlplugin/tmp/"+UUID.randomUUID();
+    downloadTo(urlString, path);
+    return path;
+  }
+
+  /** Returns a random file name */
+  public static String tmpFileName() {
+    return UUID.randomUUID().toString();
   }
 }

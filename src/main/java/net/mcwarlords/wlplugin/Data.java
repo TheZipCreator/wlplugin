@@ -29,6 +29,8 @@ public class Data {
     try {
       if(!new File("plugins/wlplugin").exists())
         new File("plugins/wlplugin").mkdir();
+      if(!new File("plugins/wlplugin/tmp").exists())
+        new File("plugins/wlplugin/tmp").mkdir();
       String[] files = {"playerData.json", "serverData.json", "uuid.json"};
       for(String file : files) {
         if(!new File("plugins/wlplugin/"+file).exists()) {
