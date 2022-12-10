@@ -1,6 +1,7 @@
 .vscode/
 target/
 include/
+bin/
 build/
 .gradle/
 bin/
