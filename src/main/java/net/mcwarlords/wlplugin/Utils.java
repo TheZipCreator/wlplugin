@@ -81,6 +81,131 @@ public class Utils {
     return sb.toString();
   }
 
+  /** similar to escapeText, except it changes it to ANSII escape sequences */
+  public static String escapeTextAnsi(String txt) {
+    StringBuilder sb = new StringBuilder("");
+    for(int i = 0; i < txt.length(); i++) {
+      char a = txt.charAt(i);
+      char b = i+1 < txt.length() ? txt.charAt(i+1) : '\0';
+      switch(a) {
+        case '&':
+          switch(b) {
+            case '&':
+              i++;
+              sb.append('&');
+              break;
+            case '_':
+              // Theme colors
+              if(i+2 < txt.length()) {
+                sb.append('§');
+                switch(txt.charAt(i+2)) {
+                  case 'p':
+                    sb.append("\u001B[0;31m");
+                    break;
+                  case 'd':
+                    sb.append("\u001B[0;37m");
+                    break;
+                  case 'e':
+                    sb.append("\u001B[0;31m");
+                    break;
+                  case 's':
+                    sb.append("\u001B[0;30m");
+                    break;
+                }
+              }
+              i += 2;
+              break;
+            case '#':
+              // hex colors
+              i += 2;
+              if(i+6 < txt.length()) {
+                String hex = txt.substring(i, i+6);
+                // sb.append(ChatColor.of("#"+hex));
+              }
+              i += 5;
+              break;
+            default:
+              i++;
+              switch(txt.charAt(i)) {
+                case '0':
+                  sb.append("\u001B[0;34m");
+                  break;
+                case '1':
+                  sb.append("\u001B[0;34m");
+                  break;
+                case '2':
+                  sb.append("\u001B[0;32m");
+                  break;
+                case '3':
+                  sb.append("\u001B[0;34m");
+                  break;
+                case '4':
+                  sb.append("\u001B[0;31m");
+                  break;
+                case '5':
+                  sb.append("\u001B[0;35m");
+                  break;
+                case '6':
+                  sb.append("\u001B[0;33m");
+                  break;
+                case '7':
+                  sb.append("\u001B[0;30m");
+                  break;
+                case '8':
+                  sb.append("\u001B[0;30m");
+                  break;
+                case '9':
+                  sb.append("\u001B[0;34m");
+                  break;
+                case 'a':
+                case 'A':
+                  sb.append("\u001B[0;32m");
+                  break;
+                case 'b':
+                case 'B':
+                  sb.append("\u001B[0;34m");
+                  break;
+                case 'c':
+                case 'C':
+                  sb.append("\u001B[0;31m");
+                  break;
+                case 'd':
+                case 'D':
+                  sb.append("\u001B[0;35m");
+                  break;
+                case 'e':
+                case 'E':
+                  sb.append("\u001B[0;33m");
+                  break;
+                case 'f':
+                case 'F':
+                  sb.append("\u001B[0;37m");
+                  break;
+              }
+              break;
+          }
+          break;
+        case '\\':
+          i++;
+          switch(b) {
+            case 'n':
+              sb.append("\n\u001B[0;30m... \u001B[0;37m");
+              break;
+            case '\\':
+              sb.append("\\");
+              break;
+            default:
+              sb.append(a);
+              sb.append(b);
+          }
+          break;
+        default:
+          sb.append(a);
+      }
+    }
+    return sb.toString();
+  }
+
   /** Gets the UUID of a player */
   public static String getUUID(Player p) {
     return p.getUniqueId().toString();
