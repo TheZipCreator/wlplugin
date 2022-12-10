@@ -10,9 +10,13 @@ import net.mcwarlords.wlplugin.discord.DiscordModule;
 
 public class ChatListener implements Listener {
   @EventHandler void onPlayerJoin(PlayerJoinEvent e) {
-    String msg = "&a&l&o+ &7"+e.getPlayer().getName();
+    Player p = e.getPlayer();
+    PlayerData pd = Data.getPlayerData(p);
+    String msg = "&a&l&o+ &7"+p.getName();
     e.setJoinMessage(Utils.escapeText(msg));
     DiscordModule.message(msg);
+    if(pd.nick != null)
+      p.setDisplayName(pd.nick);
   }
 
   @EventHandler void onPlayerQuit(PlayerQuitEvent e) {

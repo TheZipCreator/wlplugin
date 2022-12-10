@@ -93,6 +93,7 @@ public class ChatCommand implements CommandExecutor {
       case "n":
         if(args.length == 2) {
           p.sendMessage(Utils.escapeText("&_p* &_dChanged nickname to "+args[1]+"&_d."));
+          p.setDisplayName(Utils.escapeText(args[1]));
           pd.nick = args[1];
           break;
         }

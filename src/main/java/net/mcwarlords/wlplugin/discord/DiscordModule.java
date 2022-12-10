@@ -20,7 +20,6 @@ public class DiscordModule implements Module {
 
   @Override public void onEnable() {
     WlPlugin.info("wldiscord enabled");
-    message("&awldiscord enabled");
     // load key
     try {
       key = Files.readAllLines(Paths.get("plugins/wlplugin/discordkey.txt"), Charset.defaultCharset()).get(0);
@@ -32,6 +31,7 @@ public class DiscordModule implements Module {
       .enableIntents(GatewayIntent.MESSAGE_CONTENT)
       .addEventListeners(new Listener())
       .build();
+    message("&awldiscord enabled");
   }
 
   @Override public void onDisable() {
