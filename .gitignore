@@ -1,5 +1,9 @@
 .vscode/
 target/
 include/
+.gradle/
+build/
+gradle/
+bin/
 # I don't know why this dir even exists
 .metals/
