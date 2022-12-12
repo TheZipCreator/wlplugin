@@ -78,7 +78,8 @@ public class CodeCommand implements CommandExecutor {
             break;
           }
           Inventory inv = Bukkit.createInventory(null, 9, "Commands");
-          inv.addItem(Utils.createItem(Material.BOOK, "&6log", new String[]{"&7Command"}));
+          inv.addItem(Utils.createItem(Material.OAK_LOG, "&6log", new String[]{"&7Command"}));
+          inv.addItem(Utils.createItem(Material.ENDER_CHEST, "&5set", new String[]{"&7Command"}));
           if(s instanceof Player)
             ((Player)s).openInventory(inv);
           break;

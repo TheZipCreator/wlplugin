@@ -33,8 +33,8 @@ public class Interpreter {
 
     void inc() {
       line++;
-      if(line > 2) {
-        chest.setX(chest.getX()+1);
+      if(line > 5) {
+        chest.setX(chest.getX()+2);
         line = 0;
       }
     }
@@ -110,6 +110,12 @@ public class Interpreter {
 
   private void log(String msg) {
     log.accept(msg);
+  }
+
+  public Value getVar(String name) throws InterpreterException {
+    if(vars.containsKey(name))
+      return vars.get(name).val;
+    throw new InterpreterException("Unknown variable "+name+".");
   }
 
   ArrayList<Token> lex(String expr) throws InterpreterException {
@@ -215,10 +221,7 @@ public class Interpreter {
       Token t = tokens.get(i);
       switch(t.type) {
         case IDENTIFIER:
-          if(vars.containsKey(t.value))
-            operands.push(vars.get(t.value).val);
-          else
-            throw new InterpreterException("Unknown variable "+t.value);
+          operands.push(getVar(t.value));
           break;
         case STRING:
           operands.push(Value.fromStringLiteral(t.value));
@@ -261,6 +264,8 @@ public class Interpreter {
       }
       Chest chest = (Chest)(b.getState());
       Inventory inv = chest.getInventory();
+      if(inv.getSize() != 54)
+        throw new InterpreterException("Incorrect inventory size. Make sure you're using double chests and that they're facing in the +X direction");
       List<ItemStack> row = new ArrayList<ItemStack>();
       for(int i = loc.line*9; i < loc.line*9+9; i++) {
         ItemStack is = inv.getItem(i);
@@ -269,12 +274,15 @@ public class Interpreter {
       }
       if(row.size() > 0) {
         switch(row.get(0).getType()) {
-          case BOOK: { // log
+          case OAK_LOG: { // log
             String res = "";
             for(int i = 1; i < row.size(); i++)
               res += eval(row.get(i)).toString();
             log(res);
             break;
+          }
+          case ENDER_CHEST: { // set
+            // TODO
           }
           default:
             throw new InterpreterException("Invalid command type.");
