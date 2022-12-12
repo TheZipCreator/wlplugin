@@ -7,6 +7,9 @@ import org.bukkit.*;
 import net.mcwarlords.wlplugin.util.*;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.entity.*;
+import org.bukkit.inventory.*;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.jetbrains.annotations.NotNull;
 import org.json.simple.JSONArray;
 import java.net.*;
 import java.nio.channels.*;
@@ -259,7 +262,7 @@ public class Utils {
     return i;
   }
 
-  /** Returns a bounding box of a plot, with the form (topleft.x, topleft.y, bottomright.x, bottomright.y) */
+  /** Returns a bounding box of a plot */
   public static BoundingBox plot(int id) {
     Point tl = new Point(WlPlugin.PLOT_SIZE*(id%10), WlPlugin.PLOT_SIZE*(id/10));
     Point br = new Point(tl.x+(WlPlugin.PLOT_SIZE-1), tl.y+(WlPlugin.PLOT_SIZE-1));
@@ -344,5 +347,38 @@ public class Utils {
   /** Returns a random file name */
   public static String tmpFileName() {
     return UUID.randomUUID().toString();
+  }
+
+  /** Converts a string to a location */
+  public static Location stringToLocation(@NotNull String loc) {
+    String[] coords = loc.split(",");
+    if(coords.length != 3)
+      return null;
+    float x = Float.parseFloat(coords[0]);
+    float y = Float.parseFloat(coords[1]);
+    float z = Float.parseFloat(coords[2]);
+    return new Location(Bukkit.getWorlds().get(0), x, y, z);
+  }
+
+  /** Creates an item with the specified (escaped) name */
+  public static ItemStack createItem(Material m, String name) {
+    ItemStack is = new ItemStack(m);
+    ItemMeta im = is.getItemMeta();
+    im.setDisplayName(Utils.escapeText(name));
+    is.setItemMeta(im);
+    return is;
+  }
+
+  /** Creates an item with the specified (escaped) name and the specified (escaped) lore */
+  public static ItemStack createItem(Material m, String name, String[] lore) {
+    ItemStack is = new ItemStack(m);
+    ItemMeta im = is.getItemMeta();
+    im.setDisplayName(Utils.escapeText(name));
+    ArrayList<String> l = new ArrayList<String>();
+    for(int i = 0; i < lore.length; i++)
+      l.add(escapeText(lore[i]));
+    im.setLore(l);
+    is.setItemMeta(im);
+    return is;
   }
 }

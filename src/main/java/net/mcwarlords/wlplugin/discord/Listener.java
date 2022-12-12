@@ -6,11 +6,16 @@ import org.bukkit.entity.Player;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.*;
 import net.dv8tion.jda.api.events.message.*;
+import net.dv8tion.jda.api.events.session.*;
 import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.mcwarlords.wlplugin.*;
 
 public class Listener extends ListenerAdapter {
+  @Override public void onReady(ReadyEvent e) {
+    DiscordModule.message("&awldiscord enabled");
+  }
+
   @Override public void onMessageReceived(MessageReceivedEvent e) {
     if(e.getChannel().getName().equals(DiscordModule.CHANNEL_NAME)) {
       User u = e.getAuthor();

@@ -6,6 +6,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import com.google.common.io.Files;
 
 import net.mcwarlords.wlplugin.chat.ChatModule;
+import net.mcwarlords.wlplugin.code.CodeModule;
 import net.mcwarlords.wlplugin.discord.DiscordModule;
 import net.mcwarlords.wlplugin.game.GameModule;
 import net.mcwarlords.wlplugin.plot.PlotModule;
@@ -45,6 +46,7 @@ public class WlPlugin extends JavaPlugin {
     modules.add(new GameModule());
     modules.add(new SchemaModule());
     modules.add(new DiscordModule());
+    modules.add(new CodeModule());
     for(Module m : modules)
       m.onEnable();
     // add autosave every 30 min

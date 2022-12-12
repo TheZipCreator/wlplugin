@@ -22,3 +22,7 @@ commands:
     description: Interactions relating to the wlschema module. Type /wlschema help for more info
     usage: /<command> <subcommand> [args...]
     aliases: [ws, wls]
+  wlcode:
+    description: Interactions relating to the wlcode module. Type /wlcode help for more info
+    usage: /<command> <subcommand> [args...]
+    aliases: [wco, wlco]
