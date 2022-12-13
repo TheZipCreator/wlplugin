@@ -68,7 +68,7 @@ public class CodeCommand implements CommandExecutor {
                 interpreter.err(e.getMessage());
               }
             }
-          }.runTask(WlPlugin.instance);
+          }.runTaskAsynchronously(WlPlugin.instance);
           break;
         }
         case "c":

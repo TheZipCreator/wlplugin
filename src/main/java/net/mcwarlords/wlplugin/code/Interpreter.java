@@ -7,6 +7,7 @@ import java.util.regex.*;
 import org.bukkit.*;
 import org.bukkit.block.*;
 import org.bukkit.inventory.*;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.javatuples.Pair;
 
 import net.mcwarlords.wlplugin.Utils;
@@ -23,20 +24,30 @@ public class Interpreter {
     }
   }
   class CodeLoc {
-    Location chest;
+    ItemStack[][] items;
     int line;
+    Location origin;
 
-    CodeLoc(Location chest, int line) {
-      this.chest = chest;
-      this.line = line;
+    CodeLoc(Location origin, ItemStack[][] items) {
+      this.items = items;
+      this.origin = origin;
+      line = 0;
     }
 
     void inc() {
       line++;
-      if(line > 5) {
-        chest.setX(chest.getX()+2);
-        line = 0;
-      }
+    }
+
+    boolean atEnd() {
+      return line >= items.length;
+    }
+
+    ItemStack[] getLine() {
+      return items[line];
+    }
+
+    Location getLoc() {
+      return new Location(origin.getWorld(), origin.getX()+line/3, origin.getY(), origin.getZ());
     }
   }
   /** Expression tokens */
@@ -52,14 +63,15 @@ public class Interpreter {
   enum TokenType {
     IDENTIFIER, STRING, INT, FLOAT,
     ADD, SUB, MUL, DIV, MOD, CAT,
-    LPAREN, RPAREN
+    LPAREN, RPAREN,
+    COMMA
   }
   HashMap<String, Var> vars;
   Consumer<String> log;
   CodeLoc loc;
   int scope;
   private static ArrayList<Pair<Pattern, TokenType>> lexerRules;
-  static HashMap<String, CodeFunction> builtinFunctions;
+  static HashMap<String, ExternalCodeFunction> builtinFunctions;
 
   static {
     lexerRules = new ArrayList<Pair<Pattern, TokenType>>();
@@ -78,12 +90,41 @@ public class Interpreter {
     lexerRules.add(Pair.with(Pattern.compile("~"), TokenType.CAT));
     lexerRules.add(Pair.with(Pattern.compile("\\("), TokenType.LPAREN));
     lexerRules.add(Pair.with(Pattern.compile("\\)"), TokenType.RPAREN));
+    lexerRules.add(Pair.with(Pattern.compile(","), TokenType.COMMA));
 
-    builtinFunctions = new HashMap<String, CodeFunction>();
+    builtinFunctions = new HashMap<String, ExternalCodeFunction>();
+    builtinFunctions.put("list", (Value[] values) -> {
+      List<Value> l = new ArrayList<Value>();
+      for(int i = 0; i < values.length; i++)
+        l.add(values[i]);
+      return new Value(l);
+    });
   }
 
   public Interpreter(Location loc, Consumer<String> log) {
-    this.loc = new CodeLoc(loc, 0);
+    List<ItemStack[]> contents = new ArrayList<ItemStack[]>();
+    while(true) {
+      Block b = loc.getBlock();
+      if(b.getType() != Material.CHEST)
+        break;
+      Chest c = (Chest)b.getState();
+      Inventory inv = c.getInventory();
+      int rows = inv.getSize()/9;
+      if(rows == 3)
+        loc.setX(loc.getX()+1); // single chest
+      else
+        loc.setX(loc.getX()+2); // double chest
+      for(int i = 0; i < rows; i++) {
+        List<ItemStack> row = new ArrayList<ItemStack>();
+        for(int j = 0; j < 9; j++) {
+          ItemStack is = inv.getItem(i*9+j);
+          if(is != null)
+            row.add(is);
+        }
+        contents.add(row.toArray(new ItemStack[]{}));
+      }
+    }
+    this.loc = new CodeLoc(loc, contents.toArray(new ItemStack[][]{}));
     vars = new HashMap<String, Var>();
     this.log = log;
   }
@@ -104,17 +145,23 @@ public class Interpreter {
   }
 
   public void err(String msg) {
-    Location l = loc.chest;
-    log.accept(Utils.escapeText("&_pError at &_e("+l.getX()+","+l.getY()+","+l.getZ()+"):"+loc.line+"&_p:&f "+msg));
+    Location l = loc.getLoc();
+    log(Utils.escapeText("&_pError at &_e("+l.getX()+","+l.getY()+","+l.getZ()+"):"+loc.line+"&_p:&f "+msg));
   }
 
   private void log(String msg) {
-    log.accept(msg);
+    new BukkitRunnable() {
+      public void run() {
+        log.accept(msg);
+      }
+    }.runTask(WlPlugin.instance);
   }
 
   public Value getVar(String name) throws InterpreterException {
     if(vars.containsKey(name))
       return vars.get(name).val;
+    if(builtinFunctions.containsKey(name))
+      return new Value(builtinFunctions.get(name));
     throw new InterpreterException("Unknown variable "+name+".");
   }
 
@@ -256,28 +303,14 @@ public class Interpreter {
   }
 
   void run() throws InterpreterException {
-    while(true) {
-      Block b = loc.chest.getBlock();
-      if(b.getType() != Material.CHEST) {
-        log("Finished execution.");
-        return;
-      }
-      Chest chest = (Chest)(b.getState());
-      Inventory inv = chest.getInventory();
-      if(inv.getSize() != 54)
-        throw new InterpreterException("Incorrect inventory size. Make sure you're using double chests and that they're facing in the +X direction");
-      List<ItemStack> row = new ArrayList<ItemStack>();
-      for(int i = loc.line*9; i < loc.line*9+9; i++) {
-        ItemStack is = inv.getItem(i);
-        if(is != null)
-          row.add(is);
-      }
-      if(row.size() > 0) {
-        switch(row.get(0).getType()) {
+    while(!loc.atEnd()) {
+      ItemStack[] row = loc.getLine();
+      if(row.length > 0) {
+        switch(row[0].getType()) {
           case OAK_LOG: { // log
             String res = "";
-            for(int i = 1; i < row.size(); i++)
-              res += eval(row.get(i)).toString();
+            for(int i = 1; i < row.length; i++)
+              res += eval(row[i]).getString();
             log(res);
             break;
           }
@@ -290,6 +323,7 @@ public class Interpreter {
       }
       loc.inc();
     }
+    log("Finished execution.");
   }
 
 }

@@ -1,8 +1,11 @@
 package net.mcwarlords.wlplugin.code;
 
+import java.util.*;
+
 public class Value {
   enum Type {
-    NULL, INT, FLOAT, STRING
+    NULL, INT, FLOAT, STRING,
+    LIST, FUNCTION
   }
   Type type;
   Object value;
@@ -26,6 +29,16 @@ public class Value {
     value = v;
   }
 
+  Value(List<Value> v) {
+    type = Type.LIST;
+    value = v;
+  }
+
+  Value(CodeFunction v) {
+    type = Type.FUNCTION;
+    value = v;
+  }
+
   public Value clone() {
     switch(type) {
       case INT:
@@ -34,12 +47,16 @@ public class Value {
         return new Value(((Float)value).floatValue());
       case STRING:
         return new Value((String)value);
+      case LIST:
+        return new Value(new ArrayList<Value>((List<Value>)value));
+      case FUNCTION:
+        return new Value((CodeFunction)value);
       default:
         return new Value();
     }
   }
 
-  public int getInt() {
+  public int getInt() throws InterpreterException {
     switch(type) {
       case INT:
         return (Integer)value;
@@ -52,7 +69,7 @@ public class Value {
     }
   }
 
-  public float getFloat() {
+  public float getFloat() throws InterpreterException {
     switch(type) {
       case INT:
         return (float)((Integer)value);
@@ -65,16 +82,48 @@ public class Value {
     }
   }
 
-  public String toString() {
+  public String getString() throws InterpreterException {
     switch(type) {
+      case NULL:
+        return "null";
       case INT:
         return ((Integer)value).toString();
       case FLOAT:
         return ((Float)value).toString();
       case STRING:
         return (String)value;
+      case FUNCTION:
+        return "function";
+      case LIST: {
+        StringBuilder sb = new StringBuilder("[");
+        List<Value> list = (List<Value>)value;
+        for(int i = 0; i < list.size(); i++) {
+          if(i != 0)
+            sb.append(", ");
+          sb.append(list.get(i).toString());
+        }
+        return sb.toString();
+      }
       default:
         return "";
+    }
+  }
+
+  public List<Value> getList() throws InterpreterException {
+    switch(type) {
+      case LIST:
+        return (List<Value>)value;
+      default:
+        throw new InterpreterException("Cannot convert "+type+" to list.");
+    }
+  }
+
+  public CodeFunction getFunction() throws InterpreterException {
+    switch(type) {
+      case FUNCTION:
+        return (CodeFunction)value;
+      default:
+        throw new InterpreterException("Cannot convert "+type+" to function.");
     }
   }
 

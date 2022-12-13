@@ -1,5 +1,6 @@
 package net.mcwarlords.wlplugin.code;
 
-public interface CodeFunction {
+@FunctionalInterface
+public interface ExternalCodeFunction extends CodeFunction {
   public Value apply(Value[] args) throws InterpreterException;
 }
