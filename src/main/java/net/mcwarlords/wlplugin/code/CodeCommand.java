@@ -22,6 +22,7 @@ public class CodeCommand implements CommandExecutor {
     p.sendMessage(Utils.escapeText("&_s---< &_eEditing Commands &_s>---"));
     p.sendMessage(Utils.escapeText("&_p/wlcode c | commands &_s- &_dOpens an inventory of commands you can choose from."));
     p.sendMessage(Utils.escapeText("&_p/wlcode e | expression &_e<expression> &_s- &_dCreates an expression."));
+    p.sendMessage(Utils.escapeText("&_p/wlcode l | lvalue &_e<expression> &_s- &_dCreates an lvalue."));
   }
 
   class LocException extends RuntimeException {
@@ -78,8 +79,8 @@ public class CodeCommand implements CommandExecutor {
             break;
           }
           Inventory inv = Bukkit.createInventory(null, 9, "Commands");
-          inv.addItem(Utils.createItem(Material.OAK_LOG, "&6log", new String[]{"&7Command"}));
-          inv.addItem(Utils.createItem(Material.ENDER_CHEST, "&5set", new String[]{"&7Command"}));
+          inv.addItem(Utils.createItem(Material.OAK_LOG, "&6LOG", new String[]{"&7Command", "&7Logs all arguments given"}));
+          inv.addItem(Utils.createItem(Material.ENDER_CHEST, "&5SET", new String[]{"&7Command", "&7Takes an lvalue as the first argument (what to set)", " and an expression as the second argument (what to set it to)."}));
           if(s instanceof Player)
             ((Player)s).openInventory(inv);
           break;
@@ -97,6 +98,19 @@ public class CodeCommand implements CommandExecutor {
           if(s instanceof Player)
             ((Player)s).getInventory().addItem(item);
           break;
+        }
+        case "l":
+        case "lvalue": {
+          if(args.length < 2) {
+            s.sendMessage(invalidArguments);
+            break;
+          }
+          String lvalue = args[1];
+          for(int i = 2; i < args.length; i++)
+          lvalue += " "+args[i];
+          ItemStack item = Utils.createItem(Material.NAME_TAG, "&6"+lvalue, new String[]{"&7Lvalue"});
+          if(s instanceof Player)
+            ((Player)s).getInventory().addItem(item);
         }
         default:
           s.sendMessage(Utils.escapeText("&_p* &_eUnknown subcommand: "+args[0]));

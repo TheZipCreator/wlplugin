@@ -93,7 +93,7 @@ public class Interpreter {
     lexerRules.add(Pair.with(Pattern.compile(","), TokenType.COMMA));
 
     builtinFunctions = new HashMap<String, ExternalCodeFunction>();
-    builtinFunctions.put("list", (Value[] values) -> {
+    builtinFunctions.put("List", (Value[] values) -> {
       List<Value> l = new ArrayList<Value>();
       for(int i = 0; i < values.length; i++)
         l.add(values[i]);
@@ -223,6 +223,7 @@ public class Interpreter {
   Value expression(List<Token> tokens) throws InterpreterException {
     Stack<TokenType> operators = new Stack<TokenType>();
     Stack<Value> operands = new Stack<Value>();
+    boolean operatorPushed = false; // was the last thing pushed an operator?
 
     // closest you can get to a local function in java
     Consumer2<Integer, Boolean> reduce = (Integer prec, Boolean lparen) -> {
@@ -261,11 +262,12 @@ public class Interpreter {
           operands.push(ret);
         }
       } catch(EmptyStackException e) {
-        throw new InterpreterException("Incomplete expression");
+        throw new InterpreterException("Incomplete expression.");
       }
     };
     for(int i = 0; i < tokens.size(); i++) {
       Token t = tokens.get(i);
+      operatorPushed = false;
       switch(t.type) {
         case IDENTIFIER:
           operands.push(getVar(t.value));
@@ -279,9 +281,43 @@ public class Interpreter {
         case FLOAT:
           operands.push(new Value(Float.parseFloat(t.value)));
           break;
-        case LPAREN:
-          operators.push(t.type);
+        case LPAREN: {
+          if(operatorPushed || i == 0) {
+            operators.push(t.type);
+            operatorPushed = true;
+            break;
+          }
+          // function call
+          // find arguments
+          List<Value> args = new ArrayList<Value>();
+          int paren = 1;
+          List<Token> sublist = new ArrayList<Token>();
+          while(paren > 0) {
+            i++;
+            if(i >= tokens.size())
+              throw new InterpreterException("Incomplete expression.");
+            Token token = tokens.get(i);
+            switch(token.type) {
+              case LPAREN:
+                paren++;
+                break;
+              case RPAREN:
+                paren--;
+                break;
+            }
+            if(token.type == TokenType.COMMA && paren == 1) {
+              args.add(expression(sublist).clone());
+              sublist.clear();
+            } else
+              sublist.add(token);
+          }
+          if(sublist.size() > 0)
+            args.add(expression(sublist).clone());
+          // call
+          Value func = operands.pop();
+          operands.push(func.call(args.toArray(new Value[]{})));
           break;
+        }
         case RPAREN:
           reduce.accept(0, true);
           break;
@@ -293,12 +329,15 @@ public class Interpreter {
         case CAT:
           reduce.accept(precedence(t.type), false);
           operators.push(t.type);
+          operatorPushed = true;
           break;
+        case COMMA:
+          throw new InterpreterException("Unexpected comma.");
       }
     }
     reduce.accept(-1, false);
     if(operators.size() != 0 || operands.size() != 1)
-      throw new InterpreterException("Incomplete expression");
+      throw new InterpreterException("Incomplete expression.");
     return operands.get(0);
   }
 

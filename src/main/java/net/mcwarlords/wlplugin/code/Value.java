@@ -56,6 +56,12 @@ public class Value {
     }
   }
 
+  public void copyFrom(Value b) {
+    Value v = b.clone();
+    type  = v.type;
+    value = v.value;
+  }
+
   public int getInt() throws InterpreterException {
     switch(type) {
       case INT:
@@ -95,13 +101,14 @@ public class Value {
       case FUNCTION:
         return "function";
       case LIST: {
-        StringBuilder sb = new StringBuilder("[");
+        StringBuilder sb = new StringBuilder("List(");
         List<Value> list = (List<Value>)value;
         for(int i = 0; i < list.size(); i++) {
           if(i != 0)
             sb.append(", ");
-          sb.append(list.get(i).toString());
+          sb.append(list.get(i).getString());
         }
+        sb.append(")");
         return sb.toString();
       }
       default:
@@ -262,5 +269,11 @@ public class Value {
 
   public static Value cat(Value a, Value b) throws InterpreterException {
     throw new InterpreterException("Unsupported operation");
+  }
+
+  public Value call(Value[] args) throws InterpreterException {
+    if(type != Type.FUNCTION)
+      throw new InterpreterException("Cannot call "+type+".");
+    return ((CodeFunction)value).apply(args);
   }
 }
