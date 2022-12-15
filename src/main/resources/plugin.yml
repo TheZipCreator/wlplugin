@@ -21,8 +21,56 @@ commands:
   wlschema:
     description: Interactions relating to the wlschema module. Type /wlschema help for more info
     usage: /<command> <subcommand> [args...]
+    permission: wlplugin.wlschema
     aliases: [ws, wls]
   wlcode:
     description: Interactions relating to the wlcode module. Type /wlcode help for more info
     usage: /<command> <subcommand> [args...]
+    permission: wlplugin.wlcode
     aliases: [wco, wlco]
+  wlitem:
+    description: Interactions relating to the wlitem module. Type /wlcode help for more info
+    usage: /<command> <subcommand> [args...]
+    permission: wlplugin.wlitem
+    aliases: [wi, wli]
+  # wlitem aliases
+  rename:
+    description: Renames an item. Equivalent to /wlitem rename
+    usage: /<command> <new name>
+    permission: wlplugin.wlitem
+    aliases: []
+  setlore:
+    description: Relores an item. Equivalent to /wlitem relore
+    usage: /<command> <line> <new lore>
+    permission: wlplugin.wlitem
+    aliases: [relore]
+  addlore:
+    description: Adds lore to an item. Equivalent to /wlitem addlore
+    usage: /<command> <lore to add>
+    permission: wlplugin.wlitem
+    aliases: []
+  rmlore:
+    description: Removes lore from an item. Equivalent to /wlitem rmlore
+    usage: /<command> [index]
+    permission: wlplugin.wlitem
+    aliases: []
+  hideflags:
+    description: Hides item flags. Equivalent to /wlitem hideflags
+    usage: /<command>
+    permission: wlplugin.wlitem
+    aliases: []
+  showflags:
+    description: Shows item flags. Equivalent to /wlitem showflags
+    usage: /<command>
+    permission: wlplugin.wlitem
+    aliases: []
+  unsign:
+    description: Unsigns a book. Equivalent to /wlitem unsign
+    usage: /<command>
+    permission: wlplugin.wlitem
+    aliases: [book]
+  unbreakable:
+    description: Makes an item unbreakable. Equivalent to /wlitem unbreakable
+    usage: /<command>
+    permission: wlplugin.wlitem
+    aliases: []

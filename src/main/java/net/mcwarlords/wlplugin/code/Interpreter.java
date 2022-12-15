@@ -64,7 +64,7 @@ public class Interpreter {
     IDENTIFIER, STRING, INT, FLOAT,
     ADD, SUB, MUL, DIV, MOD, CAT,
     LPAREN, RPAREN,
-    COMMA
+    COMMA, DOT
   }
   HashMap<String, Var> vars;
   Consumer<String> log;
@@ -91,6 +91,7 @@ public class Interpreter {
     lexerRules.add(Pair.with(Pattern.compile("\\("), TokenType.LPAREN));
     lexerRules.add(Pair.with(Pattern.compile("\\)"), TokenType.RPAREN));
     lexerRules.add(Pair.with(Pattern.compile(","), TokenType.COMMA));
+    lexerRules.add(Pair.with(Pattern.compile("."), TokenType.DOT));
 
     builtinFunctions = new HashMap<String, ExternalCodeFunction>();
     builtinFunctions.put("List", (Value[] values) -> {
@@ -219,6 +220,8 @@ public class Interpreter {
   private interface Consumer2<T, U> {
     void accept(T t, U u) throws InterpreterException;
   }
+
+
 
   Value expression(List<Token> tokens) throws InterpreterException {
     Stack<TokenType> operators = new Stack<TokenType>();

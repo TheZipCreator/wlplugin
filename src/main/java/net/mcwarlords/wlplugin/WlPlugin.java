@@ -9,6 +9,8 @@ import net.mcwarlords.wlplugin.chat.ChatModule;
 import net.mcwarlords.wlplugin.code.CodeModule;
 import net.mcwarlords.wlplugin.discord.DiscordModule;
 import net.mcwarlords.wlplugin.game.GameModule;
+import net.mcwarlords.wlplugin.head.HeadModule;
+import net.mcwarlords.wlplugin.item.ItemModule;
 import net.mcwarlords.wlplugin.plot.PlotModule;
 import net.mcwarlords.wlplugin.schema.SchemaModule;
 
@@ -47,6 +49,8 @@ public class WlPlugin extends JavaPlugin {
     modules.add(new SchemaModule());
     modules.add(new DiscordModule());
     modules.add(new CodeModule());
+    modules.add(new ItemModule());
+    modules.add(new HeadModule());
     for(Module m : modules)
       m.onEnable();
     // add autosave every 30 min

@@ -276,4 +276,12 @@ public class Value {
       throw new InterpreterException("Cannot call "+type+".");
     return ((CodeFunction)value).apply(args);
   }
+
+  public Value sub(Value idx) throws InterpreterException {
+    switch(type) {
+      
+      default:
+        throw new InterpreterException("Cannot index type"+type);
+    }
+  }
 }
