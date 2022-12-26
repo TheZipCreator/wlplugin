@@ -9,7 +9,6 @@ import net.mcwarlords.wlplugin.chat.ChatModule;
 import net.mcwarlords.wlplugin.code.CodeModule;
 import net.mcwarlords.wlplugin.discord.DiscordModule;
 import net.mcwarlords.wlplugin.game.GameModule;
-import net.mcwarlords.wlplugin.head.HeadModule;
 import net.mcwarlords.wlplugin.item.ItemModule;
 import net.mcwarlords.wlplugin.plot.PlotModule;
 import net.mcwarlords.wlplugin.schema.SchemaModule;
@@ -24,7 +23,7 @@ import org.bukkit.command.*;
 import org.bukkit.event.*;
 
 public class WlPlugin extends JavaPlugin {
-  public static final String VERSION = "1.0.0";
+  public static final String VERSION = "1.0.1";
   public static WlPlugin instance;
   public static Random rand;
   public static final char prefixCol    = '4';
@@ -48,9 +47,8 @@ public class WlPlugin extends JavaPlugin {
     modules.add(new GameModule());
     modules.add(new SchemaModule());
     modules.add(new DiscordModule());
-    modules.add(new CodeModule());
+    // modules.add(new CodeModule());
     modules.add(new ItemModule());
-    modules.add(new HeadModule());
     for(Module m : modules)
       m.onEnable();
     // add autosave every 30 min

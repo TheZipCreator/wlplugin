@@ -24,7 +24,7 @@ public class PlotModule implements Module {
               msg += "&_sFree Area";
             else {
               if(plotId < Data.plotOwners.size())
-                msg += "&_e"+Utils.getPlayer(Data.plotOwners.get(plotId)).getName()+"&_s's Plot ";
+                msg += "&_e"+Data.nameOf(Data.plotOwners.get(plotId))+"&_s's Plot ";
               else
                 msg += "&_s Unowned Plot ";
               msg += "(#"+Integer.toString(plotId)+")";
