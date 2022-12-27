@@ -19,6 +19,8 @@ public class ChatCommand implements CommandExecutor {
     p.sendMessage(Utils.escapeText("&_p/wlchat l | lock &_e<password> &_s- &_dLocks a channel with a given password. You must be the only one in the channel to do this."));
     p.sendMessage(Utils.escapeText("&_p/wlchat hg | hideglobal &_s- &_dHides the global chat."));
     p.sendMessage(Utils.escapeText("&_p/wlchat sg | hideglobal &_s- &_dShows the global chat."));
+    p.sendMessage(Utils.escapeText("&_p/wlchat i | ignore &_s- &_dIgnores a player. If they're already ignored, it unignores them."));
+    p.sendMessage(Utils.escapeText("&_p/wlchat il | ignorelist &_s- &_dDisplays all ignored players."));
   }
 
   static final String invalidArguments = Utils.escapeText("&_p* &_eInvalid arguments.");
@@ -160,6 +162,39 @@ public class ChatCommand implements CommandExecutor {
         p.sendMessage(Utils.escapeText("&_p* &_dGlobal chat is now shown."));
         pd.hideGlobal = false;
         break;
+      case "ignore":
+      case "i": {
+        if(args.length != 2) {
+          p.sendMessage(invalidArguments);
+          return true;
+        }
+        String name = args[1];
+        if(!Data.playerExists(name)) {
+          p.sendMessage(Utils.escapeText("&_p* &_eUnknown player "+name+"."));
+          return true;
+        }
+        String uuid = Data.uuidOf(args[1]);
+        if(pd.ignored.contains(uuid)) {
+          pd.ignored.remove(uuid);
+          p.sendMessage(Utils.escapeText("&_p* &_dUnignored player "+name+"."));
+          break;
+        }
+        pd.ignored.add(uuid);
+        p.sendMessage(Utils.escapeText("&_p* &_dIgnored player "+name+"."));
+        break;
+      }
+      case "ignorelist":
+      case "il": {
+        if(args.length != 1) {
+          p.sendMessage(invalidArguments);
+          return true;
+        }
+        String ignored = "";
+        for(String uuid : pd.ignored)
+          ignored += Data.nameOf(uuid)+" ";
+        p.sendMessage(Utils.escapeText("&_p* &_dList of all ignored players:\n&_d"+ignored));
+        break;
+      }
       default:
         p.sendMessage(Utils.escapeText("&_p* &_eUnknown subcommand: "+args[0]));
         break;

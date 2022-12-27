@@ -15,3 +15,10 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 - Added `/players` to the discord bot
 - Fixed a bug where not having the discord key will cause errors after launch.
 - Set wlbot's activity to display the number of players online.
+## 1.0.3
+- Changed join messages to use `&e`
+- Changed the discord activity message from "Playing X players online" to "Playing: X/100"
+- Added discord command `/panda`
+- Added `/wlchat ignore`, which allows you to ignore/unignore players
+- Allowed an extra argument for `/wlplot wild`, which allows you to specify a player who's plots to go to a random position to.
+- Added `/wlplot center <id>` which lets you teleport to the center of a plot with an id.

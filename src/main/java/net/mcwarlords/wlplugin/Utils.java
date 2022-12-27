@@ -271,7 +271,10 @@ public class Utils {
 
   /** Gets all plots owned by a given player */
   public static int[] plotsOwnedBy(Player p) {
-    String uuid = getUUID(p);
+    return plotsOwnedBy(getUUID(p));
+  }
+
+  public static int[] plotsOwnedBy(String uuid) {
     ArrayList<Integer> plots = new ArrayList<Integer>();
     for(int i = 0; i < Data.plotOwners.size(); i++) {
       if(Data.plotOwners.get(i).equals(uuid))

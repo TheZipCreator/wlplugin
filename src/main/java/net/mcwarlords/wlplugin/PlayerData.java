@@ -1,5 +1,7 @@
 package net.mcwarlords.wlplugin;
 
+import java.util.*;
+
 import org.json.simple.*;
 
 public class PlayerData {
@@ -7,6 +9,7 @@ public class PlayerData {
   public String prefix = "";
   public String nick   = null;
   public int    plots  = 3;
+  public Set<String> ignored;
   // not saved
   public String channel = "global";
   public String uuid;
@@ -14,6 +17,7 @@ public class PlayerData {
   
   public PlayerData(String uuid) {
     this.uuid = uuid;
+    ignored = new HashSet<String>();
     if(Data.jsonPlayerData.containsKey(uuid)) {
       JSONObject obj = (JSONObject)(Data.jsonPlayerData.get(uuid));
       if(obj.containsKey("prefix"))
@@ -22,6 +26,11 @@ public class PlayerData {
         nick = (String)obj.get("nick");
       if(obj.containsKey("plots"))
         plots = Utils.asInt(obj.get("plots"));
+      if(obj.containsKey("ignored")) {
+        JSONArray arr = (JSONArray)obj.get("ignored");
+        for(Object o : arr)
+          ignored.add((String)o);
+      }
     }
   }
 
@@ -31,6 +40,12 @@ public class PlayerData {
     if(nick != null)
       obj.put("nick", nick);
     obj.put("plots", plots);
+    {
+      JSONArray arr = new JSONArray();
+      for(String s : ignored)
+        arr.add(s);
+      obj.put("ignored", arr);
+    }
     return obj;
   }
 }

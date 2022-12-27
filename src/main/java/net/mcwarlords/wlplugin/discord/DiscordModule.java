@@ -36,7 +36,7 @@ public class DiscordModule implements Module {
     jda = JDABuilder.createDefault(key)
       .enableIntents(GatewayIntent.MESSAGE_CONTENT)
       .addEventListeners(new Listener())
-      .setActivity(Activity.playing("unknown player count"))
+      .setActivity(Activity.playing(": Unknown/100"))
       .build();
     WlPlugin.addListener(new org.bukkit.event.Listener() {
       @EventHandler
@@ -47,15 +47,13 @@ public class DiscordModule implements Module {
     new BukkitRunnable() {
       @Override public void run() {
         int numPlayers = Bukkit.getOnlinePlayers().size();
-        if(numPlayers != 1)
-          jda.getPresence().setActivity(Activity.playing(numPlayers+" players online."));
-        else
-          jda.getPresence().setActivity(Activity.playing(numPlayers+" player online."));
+        jda.getPresence().setActivity(Activity.playing(": "+numPlayers+"/100"));
       }
     }.runTaskTimer(WlPlugin.instance, 0, 20);
     jda.updateCommands()
       .addCommands(
-        Commands.slash("players", "Displays all online players")
+        Commands.slash("players", "Displays all online players."),
+        Commands.slash("panda", "Puts a panda at every player. (You must have the Panda role to do this.)")
       )
     .queue();
   }

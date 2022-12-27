@@ -4,6 +4,9 @@ import java.io.*;
 import java.util.*;
 
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.json.simple.*;
 import org.json.simple.parser.*;
 
@@ -76,6 +79,14 @@ public class Data {
         games.put((String)o, new GameData((String)o));
       }
     }
+    WlPlugin.addListener(
+      new Listener() {
+        @EventHandler public void onJoin(PlayerJoinEvent e) {
+          Player p = e.getPlayer();
+          UUIDs.put(Utils.getUUID(p), p.getName());
+        }
+      }
+    );
     WlPlugin.info("Data loaded.");
   }
   public static void onDisable() {
@@ -135,5 +146,10 @@ public class Data {
   /** Get Player name from UUID */
   public static String nameOf(String uuid) {
     return UUIDs.get(uuid);
+  }
+
+  /** Test if player exists */
+  public static boolean playerExists(String name) {
+    return UUIDs.inverse().containsKey(name);
   }
 }

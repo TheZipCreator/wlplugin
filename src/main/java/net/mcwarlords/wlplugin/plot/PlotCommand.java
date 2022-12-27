@@ -11,7 +11,8 @@ public class PlotCommand implements CommandExecutor {
     p.sendMessage(Utils.escapeText("&_s======[ &_eWLPLOT &_s]======"));
     p.sendMessage(Utils.escapeText("&_p/wlplot h | help &_s- &_dDisplays this help text."));
     p.sendMessage(Utils.escapeText("&_p/wlplot c | claim &_s- &_dClaims a plot and teleports you to its center."));
-    p.sendMessage(Utils.escapeText("&_p/wlplot w | wild &_s- &_dTeleports to a random location within one of your plots."));
+    p.sendMessage(Utils.escapeText("&_p/wlplot w | wild [player] &_s- &_dTeleports to a random location within one of your plots. If [player] is specified, it teleports you to a random location within one of that player's plots."));
+    p.sendMessage(Utils.escapeText("&_p/wlplot ce | center <plot id> &_s- &_dTeleports to the center of a given plot."));
   }
 
   static final String invalidArguments = Utils.escapeText("&_p* &_eInvalid arguments.");
@@ -49,14 +50,41 @@ public class PlotCommand implements CommandExecutor {
       }
       case "w":
       case "wild": {
-        int[] plots = Utils.plotsOwnedBy(p);
+        int[] plots;
+        if(args.length == 1)
+          plots = Utils.plotsOwnedBy(p);
+        else {
+          String player = args[1];
+          if(!Data.playerExists(player)) {
+            p.sendMessage(Utils.escapeText("&_p* &_eUnknown player "+player));
+            return true;
+          }
+          plots = Utils.plotsOwnedBy(Data.uuidOf(player));
+        }
         if(plots.length == 0) {
-          p.sendMessage(Utils.escapeText("&_p* &_eYou do not own any plots!"));
+          if(args.length == 1)
+            p.sendMessage(Utils.escapeText("&_p* &_eYou do not own any plots!"));
+          else
+            p.sendMessage(Utils.escapeText("&_p* &_eThey do not own any plots!"));
           return true;
         }
         p.teleport(Utils.plot(plots[Utils.randInt(0, plots.length)]).randomWithin().toLocation());
         break;
       }
+      case "ce":
+      case "center":
+        if(args.length != 2) {
+          p.sendMessage(invalidArguments);
+          return true;
+        }
+        try {
+          int id = Integer.parseInt(args[1]);
+          p.teleport(Utils.plot(id).center().toLocation());
+        } catch(NumberFormatException e) {
+          p.sendMessage("&_p* &_eInvalid number!");
+          return true;
+        }
+        break;
       case "h":
       case "help":
         sendHelpMessage(p);

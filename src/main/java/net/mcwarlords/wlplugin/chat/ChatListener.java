@@ -12,7 +12,7 @@ public class ChatListener implements Listener {
   @EventHandler void onPlayerJoin(PlayerJoinEvent e) {
     Player p = e.getPlayer();
     PlayerData pd = Data.getPlayerData(p);
-    String msg = "&a&l&o+ &7"+p.getName();
+    String msg = "&a&l&o+ &e"+p.getName();
     e.setJoinMessage(Utils.escapeText(msg));
     DiscordModule.message(msg);
     if(pd.nick != null)
@@ -20,7 +20,7 @@ public class ChatListener implements Listener {
   }
 
   @EventHandler void onPlayerQuit(PlayerQuitEvent e) {
-    String msg = "&c&l&o- &7"+e.getPlayer().getName();
+    String msg = "&c&l&o- &e"+e.getPlayer().getName();
     e.setQuitMessage(Utils.escapeText(msg));
     DiscordModule.message(msg);
   }
@@ -39,7 +39,7 @@ public class ChatListener implements Listener {
     if(pd.channel == "global") {
       for(Player p : Bukkit.getOnlinePlayers()) {
         PlayerData pd2 = Data.getPlayerData(p);
-        if(!pd2.hideGlobal)
+        if(!pd2.hideGlobal && !pd2.ignored.contains(Utils.getUUID(e.getPlayer())))
           p.sendMessage(msg);
       }
       DiscordModule.message(preFormat);
