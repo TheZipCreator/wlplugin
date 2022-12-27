@@ -23,7 +23,7 @@ public class Listener extends ListenerAdapter {
       User u = e.getAuthor();
       if(u.isBot())
         return;
-      Utils.sendMessage("global", "&9discord &_s| &_e"+u.getName()+"&_p#"+u.getDiscriminator()+"&f: "+e.getMessage().getContentRaw());
+      Utils.sendMessage("global", "&9discord &_s| &_e"+u.getName()+"&_p#"+u.getDiscriminator()+"&f: "+e.getMessage().getContentRaw(), false);
     }
   }
 
