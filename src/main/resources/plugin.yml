@@ -33,6 +33,11 @@ commands:
     usage: /<command> <subcommand> [args...]
     permission: wlplugin.wlitem
     aliases: [wi, wli]
+  wlmisc:
+    description: Interactions relating to the wlmisc module. Type /wlmisc help for more info
+    usage: /<command> <subcommand> [args...]
+    permission: wlplugin.wlmisc
+    aliases: [wm, wlm]
   # wlitem aliases
   rename:
     description: Renames an item. Equivalent to /wlitem rename

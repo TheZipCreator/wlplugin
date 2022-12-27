@@ -23,13 +23,7 @@ public class Listener extends ListenerAdapter {
       User u = e.getAuthor();
       if(u.isBot())
         return;
-      String msg = Utils.escapeText("&9discord &_s| &_e"+u.getName()+"&_p#"+u.getDiscriminator()+"&f: "+e.getMessage().getContentRaw());
-      WlPlugin.info("[CHAT] "+msg);
-      for(Player p : Bukkit.getOnlinePlayers()) {
-        PlayerData pd = Data.getPlayerData(p);
-        if(!pd.hideGlobal)
-          p.sendMessage(msg);
-      }
+      Utils.sendMessage("global", "&9discord &_s| &_e"+u.getName()+"&_p#"+u.getDiscriminator()+"&f: "+e.getMessage().getContentRaw());
     }
   }
 

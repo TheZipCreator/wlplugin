@@ -34,20 +34,6 @@ public class ChatListener implements Listener {
       +" &8| &7"
       +(pd.nick == null ? e.getPlayer().getName() : pd.nick)
       +"&f: "+pd.prefix+e.getMessage();
-    String msg = Utils.escapeText(preFormat);
-    WlPlugin.info("[CHAT] "+msg);
-    if(pd.channel == "global") {
-      for(Player p : Bukkit.getOnlinePlayers()) {
-        PlayerData pd2 = Data.getPlayerData(p);
-        if(!pd2.hideGlobal && !pd2.ignored.contains(Utils.getUUID(e.getPlayer())))
-          p.sendMessage(msg);
-      }
-      DiscordModule.message(preFormat);
-    } else {
-      for(Player p : Bukkit.getOnlinePlayers()) {
-        if(Data.getPlayerData(p).channel.equals(pd.channel))
-          p.sendMessage(msg);
-      }
-    }
+    Utils.sendMessage(e.getPlayer(), pd.channel, preFormat);
   }
 }

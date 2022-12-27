@@ -4,6 +4,7 @@ import java.util.*;
 
 import org.bukkit.*;
 
+import net.mcwarlords.wlplugin.discord.DiscordModule;
 import net.mcwarlords.wlplugin.util.*;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.entity.*;
@@ -383,5 +384,43 @@ public class Utils {
     im.setLore(l);
     is.setItemMeta(im);
     return is;
+  }
+
+  /** Sends a message to all people in a given channel */
+  public static void sendMessage(String channel, String message) {
+    if(channel.equals("global")) {
+      for(Player p : Bukkit.getOnlinePlayers()) {
+        PlayerData pd = Data.getPlayerData(p);
+        if(!pd.hideGlobal)
+          p.sendMessage(escapeText(message));
+      }
+      DiscordModule.message(message);
+      WlPlugin.info("[CHAT] "+escapeText(message));
+      return;
+    }
+    for(Player p : Bukkit.getOnlinePlayers()) {
+      PlayerData pd = Data.getPlayerData(p);
+      if(pd.channel.equals(channel))
+        p.sendMessage(escapeText(message));
+    }
+  }
+
+  /** Sends a message to all people in a given channel with a sender */
+  public static void sendMessage(Player sender, String channel, String message) {
+    if(channel.equals("global")) {
+      for(Player p : Bukkit.getOnlinePlayers()) {
+        PlayerData pd = Data.getPlayerData(p);
+        if(!pd.hideGlobal && !pd.ignored.contains(getUUID(sender)))
+          p.sendMessage(escapeText(message));
+      }
+      DiscordModule.message(message);
+      WlPlugin.info("[CHAT] "+escapeText(message));
+      return;
+    }
+    for(Player p : Bukkit.getOnlinePlayers()) {
+      PlayerData pd = Data.getPlayerData(p);
+      if(pd.channel.equals(channel) && !pd.ignored.contains(getUUID(sender)))
+        p.sendMessage(escapeText(message));
+    }
   }
 }

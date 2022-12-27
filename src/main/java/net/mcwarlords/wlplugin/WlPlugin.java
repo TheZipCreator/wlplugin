@@ -3,13 +3,13 @@ package net.mcwarlords.wlplugin;
 import org.bukkit.plugin.java.*;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import com.google.common.io.Files;
 
 import net.mcwarlords.wlplugin.chat.ChatModule;
 import net.mcwarlords.wlplugin.code.CodeModule;
 import net.mcwarlords.wlplugin.discord.DiscordModule;
 import net.mcwarlords.wlplugin.game.GameModule;
 import net.mcwarlords.wlplugin.item.ItemModule;
+import net.mcwarlords.wlplugin.misc.MiscModule;
 import net.mcwarlords.wlplugin.plot.PlotModule;
 import net.mcwarlords.wlplugin.schema.SchemaModule;
 
@@ -49,6 +49,7 @@ public class WlPlugin extends JavaPlugin {
     modules.add(new DiscordModule());
     // modules.add(new CodeModule());
     modules.add(new ItemModule());
+    modules.add(new MiscModule());
     for(Module m : modules)
       m.onEnable();
     // add autosave every 30 min

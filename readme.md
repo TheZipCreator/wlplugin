@@ -22,3 +22,4 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 - Added `/wlchat ignore`, which allows you to ignore/unignore players
 - Allowed an extra argument for `/wlplot wild`, which allows you to specify a player who's plots to go to a random position to.
 - Added `/wlplot center <id>` which lets you teleport to the center of a plot with an id.
+- Added wlmisc module, with `/wlmisc roll`
