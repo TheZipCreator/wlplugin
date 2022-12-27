@@ -38,7 +38,9 @@ public class ChatListener implements Listener {
     WlPlugin.info("[CHAT] "+msg);
     if(pd.channel == "global") {
       for(Player p : Bukkit.getOnlinePlayers()) {
-        p.sendMessage(msg);
+        PlayerData pd2 = Data.getPlayerData(p);
+        if(!pd2.hideGlobal)
+          p.sendMessage(msg);
       }
       DiscordModule.message(preFormat);
     } else {

@@ -10,6 +10,7 @@ public class PlayerData {
   // not saved
   public String channel = "global";
   public String uuid;
+  public boolean hideGlobal = false;
   
   public PlayerData(String uuid) {
     this.uuid = uuid;

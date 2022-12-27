@@ -17,6 +17,8 @@ public class ChatCommand implements CommandExecutor {
     p.sendMessage(Utils.escapeText("&_p/wlchat n | nick &_e[nick] &_s- &_dSets your nickname to &_e[nick] &_dif specified, otherwise clears it."));
     p.sendMessage(Utils.escapeText("&_p/wlchat r | realname &_e<nick> &_s- &_dTells you which online user has a given nick."));
     p.sendMessage(Utils.escapeText("&_p/wlchat l | lock &_e<password> &_s- &_dLocks a channel with a given password. You must be the only one in the channel to do this."));
+    p.sendMessage(Utils.escapeText("&_p/wlchat hg | hideglobal &_s- &_dHides the global chat."));
+    p.sendMessage(Utils.escapeText("&_p/wlchat sg | hideglobal &_s- &_dShows the global chat."));
   }
 
   static final String invalidArguments = Utils.escapeText("&_p* &_eInvalid arguments.");
@@ -139,6 +141,24 @@ public class ChatCommand implements CommandExecutor {
         }
         p.sendMessage(Utils.escapeText("&_p* &_dSuccessfully locked channel &_e"+pd.channel+" &_dwith password &_e"+args[1]+"&_d."));
         Data.lockedChannels.put(pd.channel, args[1]);
+        break;
+      case "hideglobal":
+      case "hg":
+        if(args.length != 1) {
+          p.sendMessage(invalidArguments);
+          return true;
+        }
+        p.sendMessage(Utils.escapeText("&_p* &_dGlobal chat is now hidden."));
+        pd.hideGlobal = true;
+        break;
+      case "showglobal":
+      case "sg":
+        if(args.length != 1) {
+          p.sendMessage(invalidArguments);
+          return true;
+        }
+        p.sendMessage(Utils.escapeText("&_p* &_dGlobal chat is now shown."));
+        pd.hideGlobal = false;
         break;
       default:
         p.sendMessage(Utils.escapeText("&_p* &_eUnknown subcommand: "+args[0]));

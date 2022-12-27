@@ -5,3 +5,13 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 `LICENSE` (GNU GPLv3) is for the main code
 
 `LICENSE-lite2edit` (MIT) is for anything under src/main/java/goldendelicios
+
+# changelog
+
+## 1.0.1
+- Fixed a bug where whenever the player that owns a plot is online, going to that plot causes the "Current Plot" action bar message to disappear for all players.
+## 1.0.2
+- Added `/wlchat showglobal` and `/wlchat hideglobal`
+- Added `/players` to the discord bot
+- Fixed a bug where not having the discord key will cause errors after launch.
+- Set wlbot's activity to display the number of players online.
