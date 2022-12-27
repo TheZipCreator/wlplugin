@@ -36,7 +36,14 @@ public class MiscCommand implements CommandExecutor {
       }
       try {
         int count = Integer.parseInt(args[1]);
+        if(count < 1 || count > 1000) {
+          p.sendMessage(Utils.escapeText("&_p* &_dThe amount of dice must be between 1 and 1000"));
+          return;
+        }
         int faces = Integer.parseInt(args[2]);
+        if(faces < 1) {
+          p.sendMessage(Utils.escapeText("&_p* &_dFaces must be > 0"));
+        }
         int sum = 0;
         String msg = "&_p* &_e"+count+"d"+faces+"&_d: ";
         for(int i = 0; i < count; i++) {

@@ -25,3 +25,6 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 - Added wlmisc module, with `/wlmisc roll`
 ## 1.2.1
 - Fixed a bug where the bot would repeat messages sent in #chat-mirror
+## ?
+- Added a limit to how many faces & amount of dice you can roll
+- Fixed a bug where some color codes created buggy symbols in #chat-mirror

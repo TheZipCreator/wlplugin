@@ -101,7 +101,6 @@ public class Utils {
             case '_':
               // Theme colors
               if(i+2 < txt.length()) {
-                sb.append('§');
                 switch(txt.charAt(i+2)) {
                   case 'p':
                     sb.append("\u001B[0;31m");
