@@ -37,7 +37,7 @@ public class Listener extends ListenerAdapter {
     if (event.getName().equals("players")) {
       new BukkitRunnable() {
         @Override public void run() {
-          String res = "**List of all online players:**";
+          String res = "**List of all online players:**\n";
           for(Player p : Bukkit.getOnlinePlayers())
             res += p.getName()+"\n";
           event.reply(res).queue();
