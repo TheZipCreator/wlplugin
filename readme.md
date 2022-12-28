@@ -28,3 +28,4 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 ## ?
 - Added a limit to how many faces & amount of dice you can roll
 - Fixed a bug where some color codes created buggy symbols in #chat-mirror
+- Fixed a bug where if you put a backslash at the end of a line it would add an extra NUL character

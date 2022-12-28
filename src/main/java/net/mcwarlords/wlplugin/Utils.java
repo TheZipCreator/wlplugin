@@ -73,6 +73,9 @@ public class Utils {
             case '\\':
               sb.append("\\");
               break;
+            case '\0':
+              sb.append("\\");
+              break;
             default:
               sb.append(a);
               sb.append(b);
@@ -195,6 +198,9 @@ public class Utils {
               sb.append("\n\u001B[0;30m... \u001B[0;37m");
               break;
             case '\\':
+              sb.append("\\");
+              break;
+            case '\0':
               sb.append("\\");
               break;
             default:
