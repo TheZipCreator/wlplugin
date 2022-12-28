@@ -18,12 +18,29 @@ public class Listener extends ListenerAdapter {
     DiscordModule.message("&awldiscord enabled");
   }
 
+  private void sendMessage(String sender, String channel, String message) {
+    if(channel.equals("global")) {
+      for(Player p : Bukkit.getOnlinePlayers()) {
+        PlayerData pd = Data.getPlayerData(p);
+        if(!pd.hideGlobal && !pd.discordIgnored.contains(sender))
+          p.sendMessage(Utils.escapeText(message));
+      }
+      WlPlugin.info("[CHAT] "+Utils.escapeText(message));
+      return;
+    }
+    for(Player p : Bukkit.getOnlinePlayers()) {
+      PlayerData pd = Data.getPlayerData(p);
+      if(pd.channel.equals(channel))
+        p.sendMessage(Utils.escapeText(message));
+    }
+  }
+
   @Override public void onMessageReceived(MessageReceivedEvent e) {
     if(e.getChannel().getName().equals(DiscordModule.CHANNEL_NAME)) {
       User u = e.getAuthor();
       if(u.isBot())
         return;
-      Utils.sendMessage("global", "&9discord &_s| &_e"+u.getName()+"&_p#"+u.getDiscriminator()+"&f: "+e.getMessage().getContentRaw(), false);
+      sendMessage(u.getAsTag(), "global", "&9discord &_s| &_e"+u.getName()+"&_p#"+u.getDiscriminator()+"&f: "+e.getMessage().getContentRaw());
     }
   }
 

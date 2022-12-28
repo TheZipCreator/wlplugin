@@ -21,6 +21,8 @@ public class ChatCommand implements CommandExecutor {
     p.sendMessage(Utils.escapeText("&_p/wlchat sg | hideglobal &_s- &_dShows the global chat."));
     p.sendMessage(Utils.escapeText("&_p/wlchat i | ignore &_s- &_dIgnores a player. If they're already ignored, it unignores them."));
     p.sendMessage(Utils.escapeText("&_p/wlchat il | ignorelist &_s- &_dDisplays all ignored players."));
+    p.sendMessage(Utils.escapeText("&_p/wlchat di | discordignore &_s- &_dIgnores a user on discord. If they're already ignored, it unignores them."));
+    p.sendMessage(Utils.escapeText("&_p/wlchat dil | discordignorelist &_s- &_dDisplays all ignored discord users."));
   }
 
   static final String invalidArguments = Utils.escapeText("&_p* &_eInvalid arguments.");
@@ -193,6 +195,34 @@ public class ChatCommand implements CommandExecutor {
         for(String uuid : pd.ignored)
           ignored += Data.nameOf(uuid)+" ";
         p.sendMessage(Utils.escapeText("&_p* &_dList of all ignored players:\n&_d"+ignored));
+        break;
+      }
+      case "discordignore":
+      case "di": {
+        if(args.length != 2) {
+          p.sendMessage(invalidArguments);
+          return true;
+        }
+        String name = args[1];
+        if(pd.discordIgnored.contains(name)) {
+          pd.discordIgnored.remove(name);
+          p.sendMessage(Utils.escapeText("&_p* &_dUnignored user "+name+"."));
+          break;
+        }
+        pd.discordIgnored.add(name);
+        p.sendMessage(Utils.escapeText("&_p* &_dIgnored user "+name+"."));
+        break;
+      }
+      case "discordignorelist":
+      case "dil": {
+        if(args.length != 1) {
+          p.sendMessage(invalidArguments);
+          return true;
+        }
+        String ignored = "";
+        for(String user : pd.discordIgnored)
+          ignored += user+" ";
+        p.sendMessage(Utils.escapeText("&_p* &_dList of all ignored discord users:\n&_d"+ignored));
         break;
       }
       default:

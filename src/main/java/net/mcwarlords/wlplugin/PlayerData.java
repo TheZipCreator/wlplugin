@@ -10,6 +10,7 @@ public class PlayerData {
   public String nick   = null;
   public int    plots  = 3;
   public Set<String> ignored;
+  public Set<String> discordIgnored;
   // not saved
   public String channel = "global";
   public String uuid;
@@ -18,6 +19,7 @@ public class PlayerData {
   public PlayerData(String uuid) {
     this.uuid = uuid;
     ignored = new HashSet<String>();
+    discordIgnored = new HashSet<String>();
     if(Data.jsonPlayerData.containsKey(uuid)) {
       JSONObject obj = (JSONObject)(Data.jsonPlayerData.get(uuid));
       if(obj.containsKey("prefix"))
@@ -28,6 +30,11 @@ public class PlayerData {
         plots = Utils.asInt(obj.get("plots"));
       if(obj.containsKey("ignored")) {
         JSONArray arr = (JSONArray)obj.get("ignored");
+        for(Object o : arr)
+          ignored.add((String)o);
+      }
+      if(obj.containsKey("discordIgnored")) {
+        JSONArray arr = (JSONArray)obj.get("discordIgnored");
         for(Object o : arr)
           ignored.add((String)o);
       }
@@ -45,6 +52,12 @@ public class PlayerData {
       for(String s : ignored)
         arr.add(s);
       obj.put("ignored", arr);
+    }
+    {
+      JSONArray arr = new JSONArray();
+      for(String s : discordIgnored)
+        arr.add(s);
+      obj.put("discordIgnored", arr);
     }
     return obj;
   }
