@@ -391,20 +391,15 @@ public class Utils {
     return is;
   }
 
-  public static void sendMessage(String channel, String message) {
-    sendMessage(channel, message, true);
-  }
-
   /** Sends a message to all people in a given channel */
-  public static void sendMessage(String channel, String message, boolean sendToDisc) {
+  public static void sendMessage(String channel, String message) {
     if(channel.equals("global")) {
       for(Player p : Bukkit.getOnlinePlayers()) {
         PlayerData pd = Data.getPlayerData(p);
         if(!pd.hideGlobal)
           p.sendMessage(escapeText(message));
       }
-      if(sendToDisc)
-        DiscordModule.message(message);
+      DiscordModule.message(message);
       WlPlugin.info("[CHAT] "+escapeText(message));
       return;
     }
