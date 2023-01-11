@@ -80,6 +80,12 @@ public class WlPlugin extends JavaPlugin {
     instance.getCommand(cmd).setExecutor(exec);
   }
 
+  /** Add a CommandExecutor to the server */
+  public static void addCommand(String cmd, CommandExecutor exec, TabCompleter tc) {
+    instance.getCommand(cmd).setExecutor(exec);
+		instance.getCommand(cmd).setTabCompleter(tc);
+  }
+
   /** Log to info. Equivalent to {@code WlPlugin.instance.getLogger().info(...)} */
   public static void info(String s) {
     instance.getLogger().info(s);

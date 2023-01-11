@@ -91,7 +91,7 @@ public class ItemCommand implements CommandExecutor {
           lore = new ArrayList<String>();
         lore.add(getText.apply(1));
         im.setLore(lore);
-        p.sendMessage(Utils.escapeText("&_p* &_dLore succesfully dded to item."));
+        p.sendMessage(Utils.escapeText("&_p* &_dLore succesfully added to item."));
         break;
       }
       case "r":

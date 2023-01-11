@@ -18,6 +18,7 @@ import net.dv8tion.jda.api.entities.channel.middleman.*;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.mcwarlords.wlplugin.*;
+import net.mcwarlords.wlplugin.Module;
 
 public class DiscordModule implements Module {
   public static String key;

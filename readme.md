@@ -30,3 +30,6 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 - Fixed a bug where some color codes created buggy symbols in #chat-mirror
 - Fixed a bug where if you put a backslash at the end of a line it would add an extra NUL character
 - Added `/wlchat discordignore` and `/wlchat discordignorelist`
+## 1.4.0
+- Added tab completion to many commands
+- Fixed a misspelling in wlitem

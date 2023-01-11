@@ -2,17 +2,36 @@ package net.mcwarlords.wlplugin.plot;
 
 import org.bukkit.*;
 import org.bukkit.entity.*;
+import org.bukkit.command.*;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import net.mcwarlords.wlplugin.*;
+import net.mcwarlords.wlplugin.Module;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
+
+import java.util.*;
 
 public class PlotModule implements Module {
   @Override public void onEnable() {
     WlPlugin.info("wlplot enabled");
     WlPlugin.addListener(new PlotListener());
-    WlPlugin.addCommand("wlplot", new PlotCommand());
+    WlPlugin.addCommand("wlplot", new PlotCommand(), new TabCompleter() {
+			public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
+				if(args.length == 1)
+					return List.of(
+						"h", "help",
+						"c", "claim",
+						"w", "wild",
+						"ce", "center"
+					);
+				if(args.length == 2) {
+					if(Utils.isAny(args[0], "w", "wild"))
+						return null;
+				}
+				return List.of();
+			}	
+		});
     new BukkitRunnable() {
       public void run() {
         for(Player p : Bukkit.getOnlinePlayers()) {

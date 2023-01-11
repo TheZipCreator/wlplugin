@@ -428,4 +428,12 @@ public class Utils {
         p.sendMessage(escapeText(message));
     }
   }
+
+	/** Returns true if the object equals any of the other objects */
+	public static boolean isAny(Object o, Object... others) {
+		for(Object o2 : others)
+			if(o.equals(o2))
+				return true;
+		return false;
+	}
 }

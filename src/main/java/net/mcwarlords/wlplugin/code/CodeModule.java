@@ -1,6 +1,7 @@
 package net.mcwarlords.wlplugin.code;
 
 import net.mcwarlords.wlplugin.*;
+import net.mcwarlords.wlplugin.Module;
 
 public class CodeModule implements Module {
 
