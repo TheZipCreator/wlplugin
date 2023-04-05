@@ -79,3 +79,8 @@ commands:
     usage: /<command>
     permission: wlplugin.wlitem
     aliases: []
+  global:
+    description: Says a message in global chat. Equivalent to /wlchat global
+    usage: /<command>
+    permission: wlpluign.wlchat
+    aliases: [g]

@@ -6,5 +6,6 @@ build/
 .gradle/
 bin/
 buildcopy.bat
+buildcopy
 # I don't know why this dir even exists
 .metals/

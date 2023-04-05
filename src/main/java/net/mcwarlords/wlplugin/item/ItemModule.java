@@ -38,17 +38,15 @@ public class ItemModule implements Module {
             sender.sendMessage("wlitem can only be used by a player");
             return false;
           }
-          // should use stringbuilder but I don't care. TODO
-          String cmd = "wlitem "+alias+" ";
+          StringBuilder cmd = new StringBuilder("wlitem "+alias+" ");
           for(int i = 0; i < args.length; i++) {
             if(i != 0)
-              cmd += " ";
-            cmd += args[i];
+              cmd.append(" ");
+            cmd.append(args[i]);
           }
-          ((Player)sender).performCommand(cmd);
-          return true;
-        }
-        
+          ((Player)sender).performCommand(cmd.toString());
+        	return true;
+				}  
       });
     }
     WlPlugin.info("wlitem enabled");
