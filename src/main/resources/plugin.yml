@@ -1,7 +1,7 @@
 main: net.mcwarlords.wlplugin.WlPlugin
 name: wlplugin
 version: 1.0.0
-api-version: 1.16
+api-version: 1.19
 commands:
   wlchat:
     description: Interactions relating to the wlchat module. Type /wlchat help for more info
