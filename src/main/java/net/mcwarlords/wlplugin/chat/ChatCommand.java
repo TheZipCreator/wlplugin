@@ -120,13 +120,13 @@ public class ChatCommand implements CommandExecutor {
 				String nick = args[1];
 				ArrayList<String> users = new ArrayList<String>();
 				for(Player plyr : Bukkit.getOnlinePlayers()) {
-					if(Data.getPlayerData(plyr).nick.equals(nick))
+					if(Utils.stripColorCodes(Data.getPlayerData(plyr).nick).equals(nick))
 						users.add(plyr.getName());
 				}
 				if(users.size() == 0) {
 					p.sendMessage(Utils.escapeText("&_p* &_eCould not find any players with nickname "+nick+"&_e."));
 				} else {
-					p.sendMessage(Utils.escapeText("&_p* &_d"+String.join(", ", users)+"&_d is ~"+nick+"&_d."));
+					p.sendMessage(Utils.escapeText("&_p* &_d"+String.join(", ", users)+"&_d is "+nick+"&_d."));
 				}
 				break;
 			}
