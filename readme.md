@@ -33,3 +33,7 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 ## 1.4.0
 - Added tab completion to many commands
 - Fixed a misspelling in wlitem
+## 1.5.0
+- Updated to 1.19.4
+- Added `/wlchat global`
+- `/wlchat realname` now ignores colorcodes. (there you go, xenith)
