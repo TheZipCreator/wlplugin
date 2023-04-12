@@ -17,7 +17,8 @@ public class GameModule implements Module {
 						"w", "warp",
 						"i", "info",
 						"l", "list",
-						"s", "set"
+						"s", "set",
+						"d", "delete"
 					);
 				if(args.length == 2) {
 					if(Utils.isAny(args[0], "warp", "w", "info", "i"))

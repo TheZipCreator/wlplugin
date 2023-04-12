@@ -37,3 +37,7 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 - Updated to 1.19.4
 - Added `/wlchat global`
 - `/wlchat realname` now ignores colorcodes. (there you go, xenith)
+## 1.5.1
+- Added `/wlgame delete`
+- Fixed an unhandled exception with `/wlitem setlore` and also made it 1-indexed instead of 0-indexed
+- Typing "&&" is no longer necessary if the character after & is not a valid chat code.

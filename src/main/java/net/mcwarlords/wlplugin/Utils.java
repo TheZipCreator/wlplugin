@@ -60,8 +60,13 @@ public class Utils {
 							}
 							i += 5;
 							break;
-						default:
+						// I'm not even surprised that java doesn't have case ranges
+						case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': case 'a': case 'b': case 'c': case 'd': case 'e': case 'f': case 'A': case 'B': case 'C': case 'D': case 'E': case 'F': case 'x': case 'X': case 'k': case 'K': case 'l': case 'L': case 'm': case 'M': case 'n': case 'N': case 'o': case 'O': case 'r': case 'R':
 							sb.append('§');
+							break;
+						default:
+							sb.append("&");
+							break;
 					}
 					break;
 				case '\\':
@@ -185,8 +190,15 @@ public class Utils {
 									break;
 								case 'f':
 								case 'F':
+								case 'r':
+								case 'R':
 									sb.append("\u001B[0;37m");
 									break;
+								// no equivalents to these
+								case 'k': case 'K': case 'l': case 'L': case 'm':  case 'M': case 'n': case 'N': case 'o': case 'O':
+									break;
+								default:
+									sb.append("&"+txt.charAt(i));
 							}
 							break;
 					}

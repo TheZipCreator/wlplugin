@@ -68,13 +68,13 @@ public class ItemCommand implements CommandExecutor {
           return true;
         }
         try {
-          int l = Integer.valueOf(args[1]);
+          int l = Integer.valueOf(args[1])-1;
+          List<String> lore = im.getLore();
           if(l < 0)
             break;
-          List<String> lore = im.getLore();
           if(lore == null)
             lore = new ArrayList<String>();
-          while(lore.size() < l)
+          while(lore.size() <= l)
             lore.add("");
           lore.set(l, getText.apply(2));
           im.setLore(lore);
@@ -102,7 +102,7 @@ public class ItemCommand implements CommandExecutor {
           break;
         }
         try {
-          int l = Integer.valueOf(args[1]);
+          int l = Integer.valueOf(args[1])-1;
           List<String> lore = im.getLore();
           if(lore == null || l >= lore.size() || l < 0)
             break;
