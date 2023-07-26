@@ -40,4 +40,7 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 ## 1.5.1
 - Added `/wlgame delete`
 - Fixed an unhandled exception with `/wlitem setlore` and also made it 1-indexed instead of 0-indexed
-- Typing "&&" is no longer necessary if the character after & is not a valid chat code.
+- Typing "&&" is no longer necessary if the character after & is not a valid chat code
+## 1.6.0
+- Added `/wlmisc select` and `/wlmisc compactify`
+- Fixed unescaped text when you use an invalid subcommand in `/wlmisc`

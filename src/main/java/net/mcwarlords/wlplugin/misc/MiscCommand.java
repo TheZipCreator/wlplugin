@@ -14,6 +14,8 @@ public class MiscCommand implements CommandExecutor {
     p.sendMessage(Utils.escapeText("&_p/wlmisc h | help &_s- &_dDisplays this help information."));
     p.sendMessage(Utils.escapeText("&_p/wlmisc r | roll <# of dice> <# of faces on dice> &_s- &_dRolls dice."));
     p.sendMessage(Utils.escapeText("&_p/wlmisc rh | rollhere <# of dice> <# of faces on dice> &_s- &_dRolls dice and displays the result in your current channel."));
+    p.sendMessage(Utils.escapeText("&_p/wlmisc s | select &_s- &_dToggles selection mode."));
+    p.sendMessage(Utils.escapeText("&_p/wlmisc c | compactify &_s- &_dCompactifies the current selection into a single block."));
   }
 
   static final String invalidArguments = Utils.escapeText("&_p* &_eInvalid arguments.");
@@ -71,9 +73,33 @@ public class MiscCommand implements CommandExecutor {
         roll.accept(pd.channel);
         break;
       default:
-        p.sendMessage("&_p* &_dUnknown subcommand.");
+        p.sendMessage(Utils.escapeText("&_p* &_dUnknown subcommand."));
         break;
-      case "help":
+			case "c":
+			case "compacity": {
+				if(!pd.hasSelection()) {
+        	p.sendMessage(Utils.escapeText("&_p* &_eYour selection is empty. Use /wlmisc select to create a selection first."));
+					break;
+				}
+				int[] size = pd.selectionSize();
+				if(size[0] > 16 || size[1] > 16 || size[2] > 16) {
+        	p.sendMessage(Utils.escapeText("&_p* &_eMaximum size of a compactified structure is 16×16×16."));
+					break;
+				}
+				p.sendMessage(Utils.escapeText("&_p* &_dSuccessfully compactified block."));
+				Compactified c = new Compactified(pd.getSelection());
+				p.getInventory().addItem(c.toItem());
+				break;
+			}
+			case "s":
+			case "select":
+				pd.selecting = !pd.selecting;
+				if(pd.selecting)
+					p.sendMessage(Utils.escapeText("&_p* &_dStarted selecting. Right click to set the first position, left click to set the second position."));
+				else
+					p.sendMessage(Utils.escapeText("&_p* &_dStopped selecting."));
+      	break;
+			case "help":
         sendHelpMessage(p);
         break;
     }

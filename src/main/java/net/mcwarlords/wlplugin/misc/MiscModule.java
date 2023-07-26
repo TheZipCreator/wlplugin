@@ -4,6 +4,7 @@ package net.mcwarlords.wlplugin.misc;
 import net.mcwarlords.wlplugin.*;
 import net.mcwarlords.wlplugin.Module;
 
+import org.bukkit.event.*;
 import org.bukkit.command.*;
 import java.util.*;
 
@@ -16,11 +17,14 @@ public class MiscModule implements Module {
 					return List.of(
 						"h", "help",
 						"r", "roll",
-						"rh", "rollhere"
+						"rh", "rollhere",
+						"r", "region",
+						"c", "compacify"
 					);
 				return List.of();
 			}	
 		});
+		WlPlugin.addListener(new MiscListener());
     WlPlugin.info("wlmisc enabled");
   }
 
