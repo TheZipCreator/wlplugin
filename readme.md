@@ -44,3 +44,8 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 ## 1.6.0
 - Added `/wlmisc select` and `/wlmisc compactify`
 - Fixed unescaped text when you use an invalid subcommand in `/wlmisc`
+## 1.6.1
+- Fixed bug where only `/wlmisc c` would work and not `/wlmisc compactify`
+- Added `/wlmisc selstart` and `/wlmisc selend`
+- Added `/wlmisc csolid`
+- Fixed issues with compactified structure scaling.

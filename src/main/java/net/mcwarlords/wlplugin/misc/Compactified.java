@@ -15,8 +15,10 @@ import net.mcwarlords.wlplugin.*;
 public class Compactified {
 	public int width, height, length;
 	BlockData[] data;
+	public boolean solid = true; // true = barrier, false = structure void
 
-	public static NamespacedKey KEY = new NamespacedKey(WlPlugin.instance, "compactified");
+	public static NamespacedKey DATA_KEY = new NamespacedKey(WlPlugin.instance, "compactified");
+	public static NamespacedKey INFO_KEY = new NamespacedKey(WlPlugin.instance, "compactified-info");
 
 	public Compactified(Location[] structure) {
 		Location a = structure[0], b = structure[1];
@@ -26,18 +28,16 @@ public class Compactified {
 		data = new BlockData[length*height*width];
 		int x = a.getBlockX(), y = a.getBlockY(), z = a.getBlockZ();
 		World w  = a.getWorld();
-		for(int i = 0; i < length; i++)
+		for(int i = 0; i < width; i++)
 			for(int j = 0; j < height; j++)
-				for(int k = 0; k < width; k++) {
-					data[i*height*width+j*width+k] = w.getBlockAt(x+i, j+y, k+z).getBlockData();
+				for(int k = 0; k < length; k++) {
+					data[k*height*width+j*width+i] = w.getBlockAt(x+i, j+y, z+k).getBlockData();
 				}
 	}
 	
-	// this only exists because for some reason a call to another constructor must always be the first statement in a constructor.
-	// why?
-	// that doesn't even make sense on a JVM level; constructors are just functions named '<this>'.
-	private void deserialize(String s) throws IllegalArgumentException {
-		String[] rows = s.split("\n");
+	private void deserialize(String sdata, String info) throws IllegalArgumentException {
+		// load data
+		String[] rows = sdata.split("\n");
 		try {
 			String[] size = rows[0].split(",");
 			if(size.length != 3)
@@ -58,48 +58,74 @@ public class Compactified {
 		} catch (IllegalArgumentException e) {
 			throw new IllegalArgumentException("Error loading block data: "+e.getMessage());
 		}
+		// load info
+		if(info == null) {
+			solid = true;
+			return;
+		}
+		rows = info.split("\n");
+		if(rows.length < 1)
+			throw new IllegalArgumentException("Invalid structure info.");
+		switch(rows[0]) {
+			case "0": {
+				solid = rows[1].equals("true");
+				break;
+			}
+			default:
+				throw new IllegalArgumentException("Unrecognized info format version: "+rows[0]);
+		}
 	}
-	
-	// deserializes a string
-	public Compactified(String s) throws IllegalArgumentException {
-		deserialize(s);
+
+	public static boolean is(ItemStack is) {
+		return is.getItemMeta().getPersistentDataContainer().has(Compactified.DATA_KEY, PersistentDataType.STRING);
+
 	}
 
 	public Compactified(ItemStack is) throws IllegalArgumentException {
 		PersistentDataContainer pdc = is.getItemMeta().getPersistentDataContainer();
-		if(!pdc.has(KEY, PersistentDataType.STRING))
-			throw new IllegalArgumentException("Item does not contain compacitifed structure information.");
-		deserialize(pdc.get(KEY, PersistentDataType.STRING));
-	}
-
-	public String serialize() {
-		StringBuilder sb = new StringBuilder(width+","+height+","+length);
-		for(int i = 0; i < data.length; i++) {
-			sb.append('\n');
-			sb.append(data[i].getAsString());
+		if(!pdc.has(DATA_KEY, PersistentDataType.STRING))
+			throw new IllegalArgumentException("Item does not contain compactifed structure information.");
+		if(!pdc.has(INFO_KEY, PersistentDataType.STRING)) {
+			deserialize(pdc.get(DATA_KEY, PersistentDataType.STRING), null);
+			return;
 		}
-		return sb.toString();
+		deserialize(pdc.get(DATA_KEY, PersistentDataType.STRING), pdc.get(INFO_KEY, PersistentDataType.STRING));
+	}
+	
+	// returns data then info
+	public String[] serialize() {
+		StringBuilder datasb = new StringBuilder(width+","+height+","+length);
+		for(int i = 0; i < data.length; i++) {
+			datasb.append('\n');
+			datasb.append(data[i].getAsString());
+		}
+		StringBuilder infosb = new StringBuilder("0\n");
+		infosb.append(solid);
+		infosb.append('\n');
+		return new String[]{datasb.toString(), infosb.toString()};
 	}
 
 	public ItemStack toItem() {
 		ItemStack is = new ItemStack(Material.STRUCTURE_VOID);
 		ItemMeta im = is.getItemMeta();
 		im.setDisplayName(Utils.escapeText("&3Compactified Structure"));
-		im.getPersistentDataContainer().set(KEY, PersistentDataType.STRING, serialize());
+		String[] s = serialize();
+		im.getPersistentDataContainer().set(DATA_KEY, PersistentDataType.STRING, s[0]);
+		im.getPersistentDataContainer().set(INFO_KEY, PersistentDataType.STRING, s[1]);
 		is.setItemMeta(im);
 		return is;
 	}
 
 	public void place(Location l) {
 		float[] scale = new float[]{ 1f/width, 1f/height, 1f/length };
-		for(int i = 0; i < length; i++)
+		for(int i = 0; i < width; i++)
 			for(int j = 0; j < height; j++)
-				for(int k = 0; k < width; k++) {
-					BlockData d = data[i*height*width+j*width+k];
+				for(int k = 0; k < length; k++) {
+					BlockData d = data[k*height*width+j*width+i];
 					// skip invisible blocks
 					if(d.getMaterial() == Material.AIR || d.getMaterial() == Material.BARRIER)
 						continue;
-					BlockDisplay bd = (BlockDisplay)l.getWorld().spawnEntity(l.clone().add(i*scale[2], j*scale[1], k*scale[0]), EntityType.BLOCK_DISPLAY);
+					BlockDisplay bd = (BlockDisplay)l.getWorld().spawnEntity(l.clone().add(i*scale[0], j*scale[1], k*scale[2]), EntityType.BLOCK_DISPLAY);
 					bd.setBlock(d);
 					Transformation t = bd.getTransformation();
 					t.getScale().set(scale[0], scale[1], scale[2]);
