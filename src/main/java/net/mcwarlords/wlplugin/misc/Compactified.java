@@ -16,6 +16,7 @@ public class Compactified {
 	public int width, height, length;
 	BlockData[] data;
 	public boolean solid = true; // true = barrier, false = structure void
+	public boolean old = false; // whether this uses the old format
 
 	public static NamespacedKey DATA_KEY = new NamespacedKey(WlPlugin.instance, "compactified");
 	public static NamespacedKey INFO_KEY = new NamespacedKey(WlPlugin.instance, "compactified-info");
@@ -61,11 +62,13 @@ public class Compactified {
 		// load info
 		if(info == null) {
 			solid = true;
+			old = true;
 			return;
 		}
 		rows = info.split("\n");
 		if(rows.length < 1)
 			throw new IllegalArgumentException("Invalid structure info.");
+		old = false;
 		switch(rows[0]) {
 			case "0": {
 				solid = rows[1].equals("true");
@@ -118,6 +121,23 @@ public class Compactified {
 
 	public void place(Location l) {
 		float[] scale = new float[]{ 1f/width, 1f/height, 1f/length };
+		if(old) {
+			// kinda copypaste but wtv
+			for(int i = 0; i < length; i++)
+				for(int j = 0; j < height; j++)
+					for(int k = 0; k < width; k++) {
+						BlockData d = data[i*height*width+j*width+k];
+						// skip invisible blocks
+						if(d.getMaterial() == Material.AIR || d.getMaterial() == Material.BARRIER)
+							continue;
+						BlockDisplay bd = (BlockDisplay)l.getWorld().spawnEntity(l.clone().add(i*scale[0], j*scale[1], k*scale[2]), EntityType.BLOCK_DISPLAY);
+						bd.setBlock(d);
+						Transformation t = bd.getTransformation();
+						t.getScale().set(scale[0], scale[1], scale[2]);
+						bd.setTransformation(t);
+					}
+			return;
+		}
 		for(int i = 0; i < width; i++)
 			for(int j = 0; j < height; j++)
 				for(int k = 0; k < length; k++) {
