@@ -41,12 +41,16 @@ private fun mkItem(m: Material, name: String): ItemStack {
 }
 
 enum class CodeItem(val item: ItemStack) {
-	LBRACE(mkItem(Material.PISTON, "&6{")),
-	RBRACE(mkItem(Material.PISTON, "&6}")),
+	LBRACE(mkItem(Material.PISTON, "&6[")),
+	RBRACE(mkItem(Material.PISTON, "&6]")),
 	EVENT(mkItem(Material.DIAMOND_BLOCK, "&bEvent")),
 	BUILTIN(mkItem(Material.FURNACE, "&cBuiltin")),
-	IF(mkItem(Material.OAK_PLANKS, "&6If"))
+	IF(mkItem(Material.OAK_PLANKS, "&6If")),
+	VARIABLE(mkItem(Material.OBSIDIAN, "&5Variable")),
+	STRING(mkItem(Material.WHITE_WOOL, "&5String"))
 }
+
+internal val blocksItem = mkItem(Material.DIAMOND, "&bCode Blocks");
 
 internal fun toggleCodeMode(p: Player) {
 	var pd = Data.getPlayerData(p);
@@ -54,9 +58,7 @@ internal fun toggleCodeMode(p: Player) {
 	if(pd.codeMode) {
 		pd.prevInv = p.inventory.contents;
 		p.inventory.clear();
-		for(item in CodeItem.values()) {
-			p.inventory.addItem(item.item);
-		}
+		p.inventory.addItem(blocksItem);
 		p.sendMessage(Utils.escapeText("&_p* &_dEntered code mode."));
 	} else {
 		p.inventory.contents = pd.prevInv;

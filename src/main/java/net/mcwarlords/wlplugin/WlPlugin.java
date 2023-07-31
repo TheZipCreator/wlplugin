@@ -41,6 +41,7 @@ public class WlPlugin extends JavaPlugin {
 		// create random
 		rand = new Random();
 		Data.onEnable();
+		Utils.init();
 		modules = new ArrayList<Module>();
 		modules.add(new ChatModule());
 		modules.add(new PlotModule());
@@ -61,8 +62,15 @@ public class WlPlugin extends JavaPlugin {
 	}
 
 	@Override public void onDisable() {
-		for(Module m : modules)
-			m.onDisable();
+		for(Module m : modules) {
+			try {
+				m.onDisable();
+			} catch(NoClassDefFoundError e) {
+				// JDA throws this for some reason, so I'll just catch it here.
+				// I know you're not supposed to catch errors but this stops data saving and I believe that that is more important
+				WlPlugin.info("NoClassDefFoundError caught.");
+			}
+		}
 		Data.onDisable();
 		info("Deleting temporary files...");
 		for(File f : new File("plugins/wlplugin/tmp").listFiles())

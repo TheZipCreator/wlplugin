@@ -1,6 +1,7 @@
 package net.mcwarlords.wlplugin;
 
 import java.util.*;
+import java.util.function.*;
 
 import org.json.simple.*;
 import org.bukkit.*;
@@ -16,12 +17,15 @@ public class PlayerData {
 	public Set<String> discordIgnored;
 	// not saved //
 	// general
-	public String channel = "global";
 	public String uuid;
+	public Consumer<String> inputCB = null; // used by `Utils.getInput()`
+	// chat
+	public String channel = "global";
 	public boolean hideGlobal = false;
 	// selection information. currently used by /wm c
 	public boolean selecting = false; // whether the player is currently selecting
 	public Location selStart = null, selEnd = null;
+	// wlcode
 	public boolean codeMode = false; // used by wlcode
 	public ItemStack[] prevInv; // previous inventory before switching to code mode
 

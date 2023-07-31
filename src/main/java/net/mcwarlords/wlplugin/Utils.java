@@ -1,6 +1,7 @@
 package net.mcwarlords.wlplugin;
 
 import java.util.*;
+import java.util.function.*;
 
 import org.bukkit.*;
 
@@ -15,8 +16,29 @@ import org.json.simple.JSONArray;
 import java.net.*;
 import java.nio.channels.*;
 import java.io.*;
+import org.bukkit.event.*;
+import org.bukkit.event.player.*;
+import org.bukkit.inventory.*;
+import org.bukkit.inventory.meta.*;
 
 public class Utils {
+	public static void init() {
+		WlPlugin.addListener(new Listener() {
+			@EventHandler(priority = EventPriority.LOWEST) 
+			public void onPlayerChat(AsyncPlayerChatEvent e) {
+				var pd = Data.getPlayerData(e.getPlayer());
+				if(pd.inputCB == null)
+					return;
+				e.setCancelled(true);
+				Bukkit.getScheduler().runTask(WlPlugin.instance, () -> {
+					// might remove the escape text later, idk
+					pd.inputCB.accept(Utils.escapeText(e.getMessage()));
+					pd.inputCB = null;
+				});
+			}
+		});
+	}
+
 	/** Adds section symbols and stuff to text */
 	public static String escapeText(String txt) {
 		StringBuilder sb = new StringBuilder("");
@@ -469,5 +491,24 @@ public class Utils {
 			if(o.equals(o2))
 				return true;
 		return false;
+	}
+
+	/** Gets an input */
+	public static void getInput(Player p, String msg, Consumer<String> callback) {
+		p.sendMessage(Utils.escapeText(msg));
+		getInput(p, callback);
+	}
+	
+	public static void getInput(Player p, Consumer<String> callback) {
+		var pd = Data.getPlayerData(p);
+		pd.inputCB = callback;
+	}
+	private static int[] charWidths = {
+			4,2,5,6,6,6,6,3,5,5,5,6,2,6,2,6,6,6,6,6,6,6,6,6,6,6,2,2,5,6,5,6,7,6,6,6,6,6,6,6,6,4,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,4,6,4,6,6,0,6,6,6,6,6,5,6,6,2,6,5,3,6,6,6,6,6,6,6,4,6,6,6,6,6,6,5,2,5,7
+	};
+
+	/** Gets the width of a character */
+	public static int charWidth(char c) {
+		return c < 32 || c > 126 ? 8 : charWidths[c-32];
 	}
 }
