@@ -12,7 +12,7 @@ class CodeCommand : CommandExecutor {
     p.sendMessage(Utils.escapeText("&_p/wlcode h | help &_s- &_dDisplays this help information."));
     p.sendMessage(Utils.escapeText("&_p/wlcode n | new <name> &_s- &_dCreates a new unit with the given name. NOTE: make sure there's nothing near (32 blocks), because this may destroy it."));
     p.sendMessage(Utils.escapeText("&_p/wlcode w | warp <name> &_s- &_dWarps to a given unit."));
-    p.sendMessage(Utils.escapeText("&_p/wlcode r | reload <name> &_s- &_dReloads a unit. Should be called every time it is modified."));
+    p.sendMessage(Utils.escapeText("&_p/wlcode b | build <name> &_s- &_dBuilds a unit. Should be called every time it is modified."));
     p.sendMessage(Utils.escapeText("&_p/wlcode m | codemode &_s- &_dToggles code mode"));
 	}
 
@@ -72,6 +72,25 @@ class CodeCommand : CommandExecutor {
 				p.sendMessage(Utils.escapeText("&_p* &_dTeleported to unit &_e$name&_d."));
 			}
 			"m", "codemode" -> toggleCodeMode(p)
+			"b", "build" -> run {
+				if(args.size != 2) {
+					p.sendMessage(Utils.escapeText("&_p* &_dInvalid arguments."));
+					return@run;
+				}
+				val name = args[1];
+				if(!Data.codeUnits.contains(name)) {
+					p.sendMessage(Utils.escapeText("&_p* &_eUnknown unit $name."));
+					return@run;
+				}
+				p.sendMessage(Utils.escapeText("&_p* &_dBuilding unit &_e$name&_d..."));
+				try {
+					Data.codeUnits[name]!!.build();
+					p.sendMessage(Utils.escapeText("&_p* &_dFinished building unit."));
+				} catch(e: ParseException) {
+					p.sendMessage(Utils.escapeText("&_p* &_eError building unit: ${e.toChatString()}"));
+					e.printStackTrace();
+				}
+			}
 			else -> p.sendMessage(Utils.escapeText("&_p* &_dInvalid subcommand."))
 		}
 		return true;

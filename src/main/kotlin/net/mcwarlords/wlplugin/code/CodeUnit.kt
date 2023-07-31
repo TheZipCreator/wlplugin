@@ -17,4 +17,8 @@ class CodeUnit(val location: Location, val owner: String) {
 		o["owner"] = owner;
 		return o;
 	}
+
+	fun build() {
+		Parser.parse(location.clone().add(1.0, 0.0, 0.0));
+	}
 }

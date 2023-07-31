@@ -61,8 +61,6 @@ class CodeListener : Listener {
 		e.setCancelled(true);
 		when(e.action) {
 			Action.RIGHT_CLICK_AIR, Action.RIGHT_CLICK_BLOCK -> {
-				if(block.type != Material.BLACK_STAINED_GLASS)
-					return;
 				var item = e.item;
 				if(item == null)
 					return;
@@ -76,9 +74,44 @@ class CodeListener : Listener {
 				}
 				if(e.action == Action.RIGHT_CLICK_AIR)
 					return;
+				if(block.type != Material.BLACK_STAINED_GLASS)
+					return;
 				fun makeInputSign(name: String) {
 					makeSign(block, "Input name for", "$name in chat");
 					Utils.getInput(p, { makeSign(block, "&l${name.uppercase()}", it) });
+				}
+				fun makeLongInputSign(name: String, type: Material) {
+					makeSign(block, "Input $name", "in chat.");
+					Utils.getInput(p, {
+						// split a string into multiple blocks.
+						// this code feels ugly there's probably a better way to do it
+						var l = block.location;
+						var width = 0;
+						var lines = mutableListOf<String>();
+						var start = 0;
+						fun add() {
+							var b = l.block;
+							b.type = type;
+							while(lines.size < 3)
+								lines.add("");
+							makeSign(b, "&l${name.uppercase()}", lines[0], lines[1], lines[2]);
+							lines = mutableListOf<String>();
+							l.add(0.0, 0.0, -1.0);
+						}
+						for(i in it.indices) {
+							val c = it[i];
+							width += Utils.charWidth(c);
+							if(width > 80) {
+								lines.add(it.substring(start, i));
+								start = i;
+								width = 0;
+							}
+							if(lines.size >= 3)
+								add();
+						}
+						lines.add(it.substring(start, it.length));
+						add();
+					});
 				}
 				when(findType(item)) {
 					CodeItem.LBRACE -> {
@@ -114,37 +147,12 @@ class CodeListener : Listener {
 					}
 					CodeItem.STRING -> {
 						block.type = Material.WHITE_WOOL;
-						makeSign(block, "Input string in", "chat");
-						Utils.getInput(p, {
-							// split a string into multiple blocks.
-							// this code feels ugly there's probably a better way to do it
-							var l = block.location;
-							var width = 0;
-							var lines = mutableListOf<String>();
-							var start = 0;
-							fun add() {
-								var b = l.block;
-								b.type = Material.WHITE_WOOL;
-								while(lines.size < 3)
-									lines.add("");
-								makeSign(b, "&lSTRING", lines[0], lines[1], lines[2]);
-								lines = mutableListOf<String>();
-								l.add(0.0, 0.0, -1.0);
-							}
-							for(i in it.indices) {
-								val c = it[i];
-								width += Utils.charWidth(c);
-								if(width > 80) {
-									lines.add(it.substring(start, i));
-									start = i;
-									width = 0;
-								}
-								if(lines.size >= 3)
-									add();
-							}
-							lines.add(it.substring(start, it.length));
-							add();
-						});
+						makeLongInputSign("string", Material.WHITE_WOOL);
+					}
+
+					CodeItem.COMMENT -> {
+						block.type = Material.REDSTONE_LAMP;
+						makeLongInputSign("comment", Material.REDSTONE_LAMP);
 					}
 					null -> { e.setCancelled(false); return; }
 				}
