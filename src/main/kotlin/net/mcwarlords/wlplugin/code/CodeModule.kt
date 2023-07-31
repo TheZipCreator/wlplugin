@@ -9,16 +9,29 @@ import org.bukkit.*;
 
 class CodeModule : Module {
 	override fun onEnable() {
-    WlPlugin.addCommand("wlcode", CodeCommand(), object : TabCompleter {
+    WlPlugin.addCommand("wlcode", CodeCommand, object : TabCompleter {
 			override fun onTabComplete(sender: CommandSender, command: Command, label: String, args: Array<String>): MutableList<String> {
 					if(args.size == 1)
 						return mutableListOf(
-							"h", "help"
+							"h", "help",
+							"n", "new",
+							"w", "warp",
+							"b", "build",
+							"m", "mode"
 						);
 					return mutableListOf();
 				}	
 		});
-		WlPlugin.addListener(CodeListener());
+		WlPlugin.addListener(CodeListener);
+		WlPlugin.addListener(ExecutorListener);
+		WlPlugin.info("wlcode: building units...");
+		for(name in Data.codeUnits.keys) {
+			try {
+				Data.codeUnits[name]!!.build();
+			} catch(e: CodeException) {
+				WlPlugin.info("Failed to build unit $name");
+			}
+		}
 		WlPlugin.info("wlcode enabled");
 	}
 
@@ -42,13 +55,16 @@ private fun mkItem(m: Material, name: String, vararg lore: String): ItemStack {
 }
 
 enum class CodeItem(val item: ItemStack) {
-	LBRACE(mkItem(Material.PISTON, "&6{", "&7Opens a block.")),
-	RBRACE(mkItem(Material.PISTON, "&6}", "&7Closes a block.")),
+	LBRACK(mkItem(Material.PISTON, "&6[", "&7Opens a block.")),
+	RBRACK(mkItem(Material.PISTON, "&6]", "&7Closes a block.")),
 	EVENT(mkItem(Material.DIAMOND_BLOCK, "&bEvent", "&7An event triggered by a player.")),
 	BUILTIN(mkItem(Material.FURNACE, "&cBuiltin", "&7A built-in function.")),
 	IF(mkItem(Material.OAK_PLANKS, "&6If", "&7Checks whether a condition is true.")),
-	VARIABLE(mkItem(Material.OBSIDIAN, "&5Variable", "&7A value that can change.")),
 	STRING(mkItem(Material.WHITE_WOOL, "&5String", "&7Stores text.")),
+	NUMBER(mkItem(Material.TARGET, "&5Number", "&7A numerical value.")),
+	TRUE(mkItem(Material.LIME_TERRACOTTA, "&5True", "&7The boolean value 'true'.")),
+	FALSE(mkItem(Material.RED_TERRACOTTA, "&5False", "&7The boolean value 'false'.")),
+	VARIABLE(mkItem(Material.OBSIDIAN, "&5Variable", "&7A value that can change.")),
 	COMMENT(mkItem(Material.REDSTONE_LAMP, "&8Comment", "&7Text that is ignored. Useful for", "&7recording what something does."))
 }
 
@@ -67,4 +83,9 @@ internal fun toggleCodeMode(p: Player) {
 		pd.prevInv = null; // saves a bit of memory
 		p.sendMessage(Utils.escapeText("&_p* &_dExited code mode."));
 	}
+}
+
+// converts CONSTANT_CASE to lisp-case
+internal fun <T : Enum<T>> Enum<T>.lispCase(): String {
+	return this.name.lowercase().replace('_', '-');
 }

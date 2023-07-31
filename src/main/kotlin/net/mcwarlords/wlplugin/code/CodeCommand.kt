@@ -6,15 +6,18 @@ import org.bukkit.*;
 
 import net.mcwarlords.wlplugin.*;
 
-class CodeCommand : CommandExecutor {
+object CodeCommand : CommandExecutor {
 	private fun sendHelpMessage(p: Player) {
     p.sendMessage(Utils.escapeText("&_s======[ &_eWLCODE &_s]======"));
     p.sendMessage(Utils.escapeText("&_p/wlcode h | help &_s- &_dDisplays this help information."));
     p.sendMessage(Utils.escapeText("&_p/wlcode n | new <name> &_s- &_dCreates a new unit with the given name. NOTE: make sure there's nothing near (32 blocks), because this may destroy it."));
     p.sendMessage(Utils.escapeText("&_p/wlcode w | warp <name> &_s- &_dWarps to a given unit."));
     p.sendMessage(Utils.escapeText("&_p/wlcode b | build <name> &_s- &_dBuilds a unit. Should be called every time it is modified."));
-    p.sendMessage(Utils.escapeText("&_p/wlcode m | codemode &_s- &_dToggles code mode"));
+    p.sendMessage(Utils.escapeText("&_p/wlcode m | mode &_s- &_dToggles code mode"));
+		p.sendMessage(Utils.escapeText("&_p/wlcode s | subscribe <name> &_s- &_dSubscribes or unsubscribes to a unit."));
 	}
+
+	val invalidArguments = Utils.escapeText("&_p* &_dInvalid Arguments");
 
   override fun onCommand(p: CommandSender, command: Command, label: String, args: Array<String>): Boolean {
     if(!(p is Player)) {
@@ -30,7 +33,7 @@ class CodeCommand : CommandExecutor {
 			"h", "help" -> sendHelpMessage(p)
 			"n", "new" -> run {
 				if(args.size != 2) {
-					p.sendMessage(Utils.escapeText("&_p* &_dInvalid arguments."));
+					p.sendMessage(invalidArguments);
 					return@run;
 				}
 				val name = args[1];
@@ -60,7 +63,7 @@ class CodeCommand : CommandExecutor {
 			}
 			"w", "warp" -> run {
 				if(args.size != 2) {
-					p.sendMessage(Utils.escapeText("&_p* &_dInvalid arguments."));
+					p.sendMessage(invalidArguments);
 					return@run;
 				}
 				val name = args[1];
@@ -71,10 +74,10 @@ class CodeCommand : CommandExecutor {
 				p.teleport(Data.codeUnits[name]!!.location.clone().add(0.0, 2.0, 0.0));
 				p.sendMessage(Utils.escapeText("&_p* &_dTeleported to unit &_e$name&_d."));
 			}
-			"m", "codemode" -> toggleCodeMode(p)
+			"m", "mode" -> toggleCodeMode(p)
 			"b", "build" -> run {
 				if(args.size != 2) {
-					p.sendMessage(Utils.escapeText("&_p* &_dInvalid arguments."));
+					p.sendMessage(invalidArguments);
 					return@run;
 				}
 				val name = args[1];
@@ -88,8 +91,25 @@ class CodeCommand : CommandExecutor {
 					p.sendMessage(Utils.escapeText("&_p* &_dFinished building unit."));
 				} catch(e: ParseException) {
 					p.sendMessage(Utils.escapeText("&_p* &_eError building unit: ${e.toChatString()}"));
-					e.printStackTrace();
 				}
+			}
+			"s", "subscribe" -> run {
+				if(args.size != 2) {
+					p.sendMessage(invalidArguments);
+					return@run;
+				}
+				val name = args[1];
+				if(!Data.codeUnits.contains(name)) {
+					p.sendMessage(Utils.escapeText("&_p* &_eUnknown unit $name."));
+					return@run;
+				}
+				if(pd.subscribed.contains(name)) {
+					pd.subscribed.remove(name);
+					p.sendMessage(Utils.escapeText("&_p* &_dUnsubscribed from unit &_e$name&_d."));
+					return@run;
+				}
+				pd.subscribed.add(name);
+				p.sendMessage(Utils.escapeText("&_p* &_dSubscribed to unit &_e$name&_d."));
 			}
 			else -> p.sendMessage(Utils.escapeText("&_p* &_dInvalid subcommand."))
 		}

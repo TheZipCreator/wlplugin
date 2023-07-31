@@ -16,55 +16,76 @@ import net.mcwarlords.wlplugin.*;
 
 // class for ASTs
 sealed class Tree(val loc: Location) {
+	class Do(l: Location, val children: List<Tree>) : Tree(l);
 	class Event(l: Location, val name: kotlin.String, val children: List<Tree>) : Tree(l);
 	class If(l: Location, val cond: Tree, val success: Tree, val failure: Tree? = null) : Tree(l);
 	class Builtin(l: Location, val name: kotlin.String, val args: List<Tree>) : Tree(l);
 	class String(l: Location, val string: kotlin.String) : Tree(l);
 	class Variable(l: Location, val name: kotlin.String) : Tree(l);
-	
+	class Number(l: Location, val num: Double) : Tree(l);
+	class Bool(l: Location, val bool: Boolean): Tree(l);
+
 	override fun toString() = when(this) {
 		is Event -> "Event '$name' { ${children.joinToString(" ")} }"
 		is If -> "If { $cond $success ${if(failure == null) "" else "$failure "}}"
 		is Builtin -> "Builtin '$name' { ${args.joinToString(" ")} }"
 		is String -> "String '$string'"
 		is Variable -> "Variable '$name'"
+		is Number -> "Number '$num'"
+		is Bool -> if(bool) "True" else "False"
+		is Do -> "${children.joinToString(" ")}"
+	}
+
+	fun name() = when(this) {
+		is Do -> "Do"
+		is Event -> "Event"
+		is If -> "If"
+		is Builtin -> "Builtin"
+		is String -> "String"
+		is Variable -> "Variable"
+		is Number -> "Number"
+		is Bool -> "Bool"
 	}
 }
 
 
 sealed class Token(val loc: Location) {
 	class If(l: Location) : Token(l);
-	class LBrace(l: Location) : Token(l);
-	class RBrace(l: Location) : Token(l);
+	class Lbrack(l: Location) : Token(l);
+	class Rbrack(l: Location) : Token(l);
 	class Event(l: Location, val name: kotlin.String) : Token(l);
 	class Builtin(l: Location, val name: kotlin.String) : Token(l);
 	class Variable(l: Location, val name: kotlin.String) : Token(l);
 	class String(l: Location, val string: kotlin.String) : Token(l);
-	
+	class Number(l: Location, val num: Double) : Token(l);
+	class Bool(l: Location, val bool: Boolean): Token(l);
+
 	override fun toString(): kotlin.String = when(this) {
-			is If -> "if"
-			is LBrace -> "left brace"
-			is RBrace -> "right brace"
-			is Event -> "event '$name'"
-			is Builtin -> "builtin '$name'"
-			is Variable -> "variable '$name'"
-			is String -> "string '$string'"
+		is If -> "if"
+		is Lbrack -> "left bracket"
+		is Rbrack -> "right bracket"
+		is Event -> "event '$name'"
+		is Builtin -> "builtin '$name'"
+		is Variable -> "variable '$name'"
+		is String -> "string '$string'"
+		is Number -> "number '$num'"
+		is Bool -> if(bool) "true" else "false"
 	}
 }
 
-class ParseException(val loc: Location, msg: String) : Exception(msg) {
+open class CodeException(val loc: Location?, msg: String) : Exception(msg) {
 	// returns a string that should be Utils.escapeText()'d
-	fun toChatString(): String {
-		return "&_p[${loc.x}, ${loc.y}, ${loc.z}] &_e$message";
-	}
+	fun toChatString() = "&_p[${loc?.x}, ${loc?.y}, ${loc?.z}] &_e$message";
 }
+
+class ParseException(loc: Location?, msg: String) : CodeException(loc, msg);
 
 class Parser(var loc: Location) {
 	val startZ = loc.z;
 
 	companion object {
-		fun parse(l: Location) {
-			Parser(l).parse();
+		fun parse(l: Location): Tree {
+			return Parser(l).parse();
 		}
 	}
 
@@ -102,7 +123,7 @@ class Parser(var loc: Location) {
 			var _b = nextBlock();
 			if(_b == null)
 				return null;
-			var b = _b!!;
+			var b = _b!!; // the compiler says the `!!` is uneccessary but removing it causes an error
 			fun readSign(): String {
 				var lines = (b.getRelative(BlockFace.EAST).state as Sign).lines;
 				return lines.slice(1..lines.size-1).joinToString("");
@@ -113,32 +134,37 @@ class Parser(var loc: Location) {
 				when(b.type) {
 					Material.PISTON -> {
 						if((b.blockData as Directional).facing == BlockFace.NORTH)
-							return Token.LBrace(loc);
+							return Token.Lbrack(loc);
 						else
-							return Token.RBrace(loc);
+							return Token.Rbrack(loc);
 					}
 					Material.DIAMOND_BLOCK -> {
-						return Token.Event(loc, readSign());
+						var s = readSign();
+						for(e in CodeEvent.values()) {
+							if(s == e.lispCase())
+								return Token.Event(loc, s);
+						}
+						throw ParseException(loc, "Unknown event '$s'.");
 					}
-					Material.FURNACE -> {
-						return Token.Builtin(loc, readSign());
-					}
-					Material.OAK_PLANKS -> {
-						return Token.If(loc);
-					}
-					Material.OBSIDIAN -> {
-						return Token.Variable(loc, readSign());
-					}
-					Material.WHITE_WOOL -> {
-						return Token.String(loc, buildString {
-							while(true) {
-								append(readSign());
-								if(b.getRelative(BlockFace.NORTH).type == Material.WHITE_WOOL)
-									b = nextBlock()!!;
-								else
-									break;
-							}
-						});
+					Material.FURNACE -> return Token.Builtin(loc, readSign());
+					Material.OAK_PLANKS -> return Token.If(loc);
+					Material.OBSIDIAN -> return Token.Variable(loc, readSign());
+					Material.WHITE_WOOL -> return Token.String(loc, buildString {
+						while(true) {
+							append(readSign());
+							if(b.getRelative(BlockFace.NORTH).type == Material.WHITE_WOOL)
+								b = nextBlock()!!;
+							else
+								break;
+						}
+					});
+					Material.LIME_TERRACOTTA -> return Token.Bool(loc, true);
+					Material.RED_TERRACOTTA -> return Token.Bool(loc, false);
+					Material.TARGET -> {
+						val n = readSign().toDoubleOrNull();
+						if(n == null)
+							throw ParseException(loc, "Invalid number.");
+						return Token.Number(loc, n);
 					}
 					else -> throw ParseException(loc, "Unknown block type: ${b.type.toString()}")
 				}
@@ -164,12 +190,11 @@ class Parser(var loc: Location) {
 			var tk = next();
 			if(tk == null)
 				throwEOF();
-			if(tk !is Token.LBrace)
+			if(tk !is Token.Lbrack)
 				throw ParseException(tk.loc, "Expected left brace, got $tk.");
 		};
 		while(true) {
-			var tk = peek();
-			if(peek() is Token.RBrace) {
+			if(peek() is Token.Rbrack) {
 				next(); // consume rbrace
 				return list;
 			}
@@ -191,7 +216,7 @@ class Parser(var loc: Location) {
 		if(topLevel && (tk !is Token.Event))
 			throw ParseException(tk.loc, "Unexpected $tk at top-level.");
 		when(tk) {
-			is Token.LBrace, is Token.RBrace -> {
+			is Token.Lbrack, is Token.Rbrack -> {
 				throw ParseException(tk.loc, "Unexpected $tk.");
 			}
 			is Token.If -> {
@@ -213,21 +238,23 @@ class Parser(var loc: Location) {
 				val b = block();
 				return Tree.Builtin(tk.loc, tk.name, b);
 			}
-			is Token.Variable -> {
-				return Tree.Variable(tk.loc, tk.name);
-			}
-			is Token.String -> {
-				return Tree.String(tk.loc, tk.string);
-			}
+			is Token.Variable -> return Tree.Variable(tk.loc, tk.name);
+			is Token.String -> return Tree.String(tk.loc, tk.string);
+			is Token.Number -> return Tree.Number(tk.loc, tk.num);
+			is Token.Bool -> return Tree.Bool(tk.loc, tk.bool);
 		}
 	}
 
-	fun parse() {
+	fun parse(): Tree {
+		val list = mutableListOf<Tree>();
 		while(true) {
 			var tree = nextTree(true);
 			if(tree == null)
-				return;
-			WlPlugin.info("$tree");
+				break;
+			list.add(tree);
 		}
+		if(list.size == 0)
+			throw ParseException(null, "Empty program.");
+		return Tree.Do(list[0].loc, list);
 	}
 }

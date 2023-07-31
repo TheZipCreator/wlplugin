@@ -15,6 +15,7 @@ public class PlayerData {
 	public int		plots	= 3;
 	public Set<String> ignored;
 	public Set<String> discordIgnored;
+	public Set<String> subscribed; // subscribed code units
 	// not saved //
 	// general
 	public String uuid;
@@ -33,6 +34,7 @@ public class PlayerData {
 		this.uuid = uuid;
 		ignored = new HashSet<String>();
 		discordIgnored = new HashSet<String>();
+		subscribed = new HashSet<String>();
 		if(Data.jsonPlayerData.containsKey(uuid)) {
 			JSONObject obj = (JSONObject)(Data.jsonPlayerData.get(uuid));
 			if(obj.containsKey("prefix"))
@@ -50,6 +52,11 @@ public class PlayerData {
 				JSONArray arr = (JSONArray)obj.get("discordIgnored");
 				for(Object o : arr)
 					ignored.add((String)o);
+			}
+			if(obj.containsKey("subscribed")) {
+				JSONArray arr = (JSONArray)obj.get("subscribed");
+				for(Object o : arr)
+					subscribed.add((String)o);
 			}
 		}
 	}
@@ -71,6 +78,12 @@ public class PlayerData {
 			for(String s : discordIgnored)
 				arr.add(s);
 			obj.put("discordIgnored", arr);
+		}
+		{
+			JSONArray arr = new JSONArray();
+			for(String s : subscribed)
+				arr.add(s);
+			obj.put("subscribed", arr);
 		}
 		return obj;
 	}

@@ -13,7 +13,7 @@ import org.bukkit.inventory.*;
 
 import net.mcwarlords.wlplugin.*;
 
-class CodeListener : Listener {
+object CodeListener : Listener {
 	private fun findType(item: ItemStack): CodeItem? {
 		for(ci in CodeItem.values()) {
 			if(ci.item == item)
@@ -21,33 +21,32 @@ class CodeListener : Listener {
 		}
 		return null;
 	}
-	companion object {
-		private fun makeSign(b: Block, ln0: String, ln1: String = "", ln2: String = "", ln3: String = "") {
-			var b2 = b.getRelative(BlockFace.EAST);
-			b2.type = Material.OAK_WALL_SIGN;
-			var bd = b2.blockData as WallSign;
-			bd.facing = BlockFace.EAST;
-			b2.blockData = bd;
-			var sign = b2.state as Sign;
-			/* 
-			when we update to 1.20, this will replace the other code:
-			var front = sign.getSide(Side.FRONT);
-			front.setLine(0, Utils.escapeText(ln0));
-			front.setLine(1, Utils.escapeText(ln1));
-			front.setLine(2, Utils.escapeText(ln2));
-			front.setLine(3, Utils.escapeText(ln3));
-			*/
-			sign.setLine(0, Utils.escapeText(ln0));
-			sign.setLine(1, Utils.escapeText(ln1));
-			sign.setLine(2, Utils.escapeText(ln2));
-			sign.setLine(3, Utils.escapeText(ln3));
+	
+	private fun makeSign(b: Block, ln0: String, ln1: String = "", ln2: String = "", ln3: String = "") {
+		var b2 = b.getRelative(BlockFace.EAST);
+		b2.type = Material.OAK_WALL_SIGN;
+		var bd = b2.blockData as WallSign;
+		bd.facing = BlockFace.EAST;
+		b2.blockData = bd;
+		var sign = b2.state as Sign;
+		/* 
+		when we update to 1.20, this will replace the other code:
+		var front = sign.getSide(Side.FRONT);
+		front.setLine(0, Utils.escapeText(ln0));
+		front.setLine(1, Utils.escapeText(ln1));
+		front.setLine(2, Utils.escapeText(ln2));
+		front.setLine(3, Utils.escapeText(ln3));
+		*/
+		sign.setLine(0, Utils.escapeText(ln0));
+		sign.setLine(1, Utils.escapeText(ln1));
+		sign.setLine(2, Utils.escapeText(ln2));
+		sign.setLine(3, Utils.escapeText(ln3));
+		sign.update(true);
+		// update the sign again later.
+		// I believe I have to do this because the client doesn't realize it's a sign immediately?
+		Bukkit.getScheduler().runTaskLater(WlPlugin.instance, Runnable {
 			sign.update(true);
-			// update the sign again later.
-			// I believe I have to do this because the client doesn't realize it's a sign immediately?
-			Bukkit.getScheduler().runTaskLater(WlPlugin.instance, Runnable {
-				sign.update(true);
-			}, 5);
-		}
+		}, 5);
 	}
 
 	@EventHandler fun onPlayerInteract(e: PlayerInteractEvent) {
@@ -66,8 +65,8 @@ class CodeListener : Listener {
 					return;
 				if(item == blocksItem) {
 					var inv = Bukkit.createInventory(null, 18, "Code Blocks");
-					for(item in CodeItem.values()) {
-						inv.addItem(item.item);
+					for(i in CodeItem.values()) {
+						inv.addItem(i.item);
 					}
 					p.openInventory(inv);
 					return;
@@ -76,9 +75,14 @@ class CodeListener : Listener {
 					return;
 				if(block.type != Material.BLACK_STAINED_GLASS)
 					return;
-				fun makeInputSign(name: String) {
+				fun makeInputSign(name: String, validator: ((s: String) -> Boolean)? = null) {
 					makeSign(block, "Input name for", "$name in chat");
-					Utils.getInput(p, { makeSign(block, "&l${name.uppercase()}", it) });
+					Utils.getInput(p, { 
+						if(validator != null && !validator(it))
+							makeSign(block, "&cInvalid $name");
+						else
+							makeSign(block, "&l${name.uppercase()}", it) 
+					});
 				}
 				fun makeLongInputSign(name: String, type: Material) {
 					makeSign(block, "Input $name", "in chat.");
@@ -114,13 +118,13 @@ class CodeListener : Listener {
 					});
 				}
 				when(findType(item)) {
-					CodeItem.LBRACE -> {
+					CodeItem.LBRACK -> {
 						block.type = Material.PISTON;
 						var bd = block.blockData as Piston;
 						bd.facing = BlockFace.NORTH;
 						block.blockData = bd;
 					}
-					CodeItem.RBRACE -> {
+					CodeItem.RBRACK -> {
 						block.type = Material.PISTON;
 						var bd = block.blockData as Piston;
 						bd.facing = BlockFace.SOUTH;
@@ -149,7 +153,18 @@ class CodeListener : Listener {
 						block.type = Material.WHITE_WOOL;
 						makeLongInputSign("string", Material.WHITE_WOOL);
 					}
-
+					CodeItem.NUMBER -> {
+						block.type = Material.TARGET;
+						makeInputSign("number", { it.toDoubleOrNull() != null });
+					}
+					CodeItem.TRUE -> {
+						block.type = Material.LIME_TERRACOTTA;
+						makeSign(block, "&lBOOL", "true");
+					}
+					CodeItem.FALSE -> {
+						block.type = Material.RED_TERRACOTTA;
+						makeSign(block, "&lBOOL", "false");
+					}
 					CodeItem.COMMENT -> {
 						block.type = Material.REDSTONE_LAMP;
 						makeLongInputSign("comment", Material.REDSTONE_LAMP);
