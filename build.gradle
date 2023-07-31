@@ -1,7 +1,7 @@
 plugins {
   id 'com.github.johnrengelman.shadow' version '7.1.2'
   id 'java'
-  // id 'kotlin'
+  id 'org.jetbrains.kotlin.jvm' version '1.6.20-RC2'
 }
 
 project.tasks.shadowJar.dependsOn build
@@ -34,6 +34,10 @@ dependencies {
   // compileOnly "com.fastasyncworldedit:FastAsyncWorldEdit-Bukkit", { transitive = false }
 }
 
+sourceSets {
+	main.java.srcDirs += 'src/main/kotlin'
+}
+
 shadowJar {
 
 }
@@ -44,6 +48,12 @@ description = 'wlplugin'
 
 java {
 	sourceCompatibility 17
+}
+
+kotlin {
+	jvmToolchain {
+		languageVersion.set(JavaLanguageVersion.of(17))
+	}
 }
 
 tasks.withType(JavaCompile) {

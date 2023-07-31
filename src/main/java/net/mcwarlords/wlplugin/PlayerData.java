@@ -5,6 +5,8 @@ import java.util.*;
 import org.json.simple.*;
 import org.bukkit.*;
 
+import org.bukkit.inventory.*;
+
 public class PlayerData {
 	// saved //
 	public String prefix = "";
@@ -20,7 +22,9 @@ public class PlayerData {
 	// selection information. currently used by /wm c
 	public boolean selecting = false; // whether the player is currently selecting
 	public Location selStart = null, selEnd = null;
-	
+	public boolean codeMode = false; // used by wlcode
+	public ItemStack[] prevInv; // previous inventory before switching to code mode
+
 	public PlayerData(String uuid) {
 		this.uuid = uuid;
 		ignored = new HashSet<String>();

@@ -47,7 +47,7 @@ public class WlPlugin extends JavaPlugin {
 		modules.add(new GameModule());
 		modules.add(new SchemaModule());
 		modules.add(new DiscordModule());
-		// modules.add(new CodeModule());
+		modules.add(new CodeModule());
 		modules.add(new ItemModule());
 		modules.add(new MiscModule());
 		for(Module m : modules)
