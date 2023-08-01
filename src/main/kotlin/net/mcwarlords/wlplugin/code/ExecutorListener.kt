@@ -5,29 +5,22 @@ package net.mcwarlords.wlplugin.code;
 import org.bukkit.*;
 import org.bukkit.event.*;
 import org.bukkit.event.player.*;
-import kotlin.reflect.*;
+import org.bukkit.event.block.*;
+import org.bukkit.entity.*;
+import org.bukkit.inventory.*;
 
 import net.mcwarlords.wlplugin.*;
 
-enum class CodeEvent(val event: KClass<*>) {
-	JOIN(PlayerJoinEvent::class),
-	QUIT(PlayerQuitEvent::class),
-	INTERACT(PlayerInteractEvent::class)
-}
 
-object ExecutorListener : Listener {
-	private fun handleEvent(e: PlayerEvent) {
-		val pd = Data.getPlayerData(e.player);
-		for(unitName in pd.subscribed) {
-			if(!Data.codeUnits.containsKey(unitName))
-				continue;
-			Data.codeUnits[unitName]!!.handleEvent(e);
+
+object ExecutorListener : Listener {	
+	@EventHandler fun onPlayerJoin(e: PlayerJoinEvent) = CJoinEvent(e).execute();
+	@EventHandler fun onPlayerQuit(e: PlayerQuitEvent) = CQuitEvent(e).execute();
+	@EventHandler fun onPlayerInteract(e: PlayerInteractEvent) {
+		when(e.action) {
+			Action.LEFT_CLICK_BLOCK, Action.LEFT_CLICK_AIR -> CLeftClickEvent(e).execute()
+			Action.RIGHT_CLICK_BLOCK, Action.RIGHT_CLICK_AIR -> if(e.getHand() != EquipmentSlot.OFF_HAND) CRightClickEvent(e).execute()
+			else -> {}
 		}
 	}
-	
-	// maybe there's a way I could auto-generate these methods?
-
-	@EventHandler fun onPlayerJoin(e: PlayerJoinEvent) = handleEvent(e);
-	@EventHandler fun onPlayerQuit(e: PlayerQuitEvent) = handleEvent(e);
-	@EventHandler fun onPlayerInteract(e: PlayerInteractEvent) = handleEvent(e);
 }

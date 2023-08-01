@@ -57,7 +57,6 @@ object CodeListener : Listener {
 		if(!pd.codeMode)
 			return;
 		var block = e.clickedBlock!!;
-		e.setCancelled(true);
 		when(e.action) {
 			Action.RIGHT_CLICK_AIR, Action.RIGHT_CLICK_BLOCK -> {
 				var item = e.item;
@@ -70,16 +69,18 @@ object CodeListener : Listener {
 					}
 					p.openInventory(inv);
 					return;
+					e.setCancelled(true);
 				}
 				if(e.action == Action.RIGHT_CLICK_AIR)
 					return;
 				if(block.type != Material.BLACK_STAINED_GLASS)
 					return;
-				fun makeInputSign(name: String, validator: ((s: String) -> Boolean)? = null) {
-					makeSign(block, "Input name for", "$name in chat");
+				e.setCancelled(true);
+				fun makeInputSign(name: String, validator: ((s: String) -> Boolean)? = null, displayName: String = name) {
+					makeSign(block, "Input name for", "$displayName in chat");
 					Utils.getInput(p, { 
 						if(validator != null && !validator(it))
-							makeSign(block, "&cInvalid $name");
+							makeSign(block, "&cInvalid $displayName");
 						else
 							makeSign(block, "&l${name.uppercase()}", it) 
 					});
@@ -145,6 +146,10 @@ object CodeListener : Listener {
 						block.type = Material.OAK_PLANKS
 						makeSign(block, "&lIF");
 					}
+					CodeItem.DO -> {
+						block.type = Material.MANGROVE_PLANKS;
+						makeSign(block, "&lDO");
+					}
 					CodeItem.VARIABLE -> {
 						block.type = Material.OBSIDIAN;
 						makeInputSign("variable");
@@ -164,6 +169,25 @@ object CodeListener : Listener {
 					CodeItem.FALSE -> {
 						block.type = Material.RED_TERRACOTTA;
 						makeSign(block, "&lBOOL", "false");
+					}
+					CodeItem.PARAMETER -> {
+						block.type = Material.PRISMARINE_BRICKS;
+						makeInputSign("parameter");
+					}
+					CodeItem.ITEM -> {
+						block.type = Material.BARREL;
+						var bd = block.blockData as Directional;
+						bd.facing = BlockFace.EAST;
+						block.blockData = bd;
+						makeSign(block, "&lITEM");
+					}
+					CodeItem.DECLARE -> {
+						block.type = Material.CRIMSON_HYPHAE;
+						makeInputSign("declare", displayName="variable");
+					}
+					CodeItem.SET -> {
+						block.type = Material.WARPED_HYPHAE;
+						makeInputSign("set", displayName="variable");
 					}
 					CodeItem.COMMENT -> {
 						block.type = Material.REDSTONE_LAMP;

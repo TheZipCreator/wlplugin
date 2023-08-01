@@ -40,16 +40,11 @@ class CodeUnit(val location: Location, val owner: String) {
 		events = map;
 	}
 
-	fun handleEvent(e: PlayerEvent) {
-		for(type in CodeEvent.values()) {
-			if(!type.event.isInstance(e))
-				continue;
-			val name = type.lispCase();
-			if(!events.containsKey(name))
-				return;
-			var exec = Executor(0u, ExecutorContext(e, false));
-			exec.run(events[name]!!);
+	fun handleEvent(e: CEvent) {
+		if(!events.containsKey(e.name))
 			return;
-		}
+		var exec = Executor(0u, ExecutorContext(e, false));
+		exec.run(events[e.name]!!);
+		return;
 	}
 }
