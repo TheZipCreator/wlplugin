@@ -63,13 +63,13 @@ object CodeListener : Listener {
 				if(item == null)
 					return;
 				if(item == blocksItem) {
-					var inv = Bukkit.createInventory(null, 18, "Code Blocks");
+					var inv = Bukkit.createInventory(null, 27, "Code Blocks");
 					for(i in CodeItem.values()) {
 						inv.addItem(i.item);
 					}
 					p.openInventory(inv);
-					return;
 					e.setCancelled(true);
+					return;
 				}
 				if(e.action == Action.RIGHT_CLICK_AIR)
 					return;
@@ -78,11 +78,27 @@ object CodeListener : Listener {
 				e.setCancelled(true);
 				fun makeInputSign(name: String, validator: ((s: String) -> Boolean)? = null, displayName: String = name) {
 					makeSign(block, "Input name for", "$displayName in chat");
-					Utils.getInput(p, { 
-						if(validator != null && !validator(it))
+					Utils.getInput(p, fn@ { 
+						if(validator != null && !validator(it)) {
 							makeSign(block, "&cInvalid $displayName");
-						else
-							makeSign(block, "&l${name.uppercase()}", it) 
+							return@fn
+						}
+						var start = 0;
+						var width = 0;
+						var lines = mutableListOf<String>();
+						for(i in it.indices) {
+							val c = it[i];
+							width += Utils.charWidth(c);
+							if(width > 80) {
+								lines.add(it.substring(start, i));
+								start = i;
+								width = 0;
+							}
+						}
+						lines.add(it.substring(start, it.length));
+						while(lines.size < 3)
+							lines.add("");
+						makeSign(block, "&l${name.uppercase()}", lines[0], lines[1], lines[2])
 					});
 				}
 				fun makeLongInputSign(name: String, type: Material) {
@@ -150,6 +166,10 @@ object CodeListener : Listener {
 						block.type = Material.MANGROVE_PLANKS;
 						makeSign(block, "&lDO");
 					}
+					CodeItem.FOR -> {
+						block.type = Material.MAGMA_BLOCK;
+						makeSign(block, "&lFOR");
+					}
 					CodeItem.VARIABLE -> {
 						block.type = Material.OBSIDIAN;
 						makeInputSign("variable");
@@ -181,6 +201,10 @@ object CodeListener : Listener {
 						block.blockData = bd;
 						makeSign(block, "&lITEM");
 					}
+					CodeItem.LIST -> {
+						block.type = Material.END_STONE_BRICKS;
+						makeSign(block, "&lLIST");
+					}
 					CodeItem.DECLARE -> {
 						block.type = Material.CRIMSON_HYPHAE;
 						makeInputSign("declare", displayName="variable");
@@ -197,6 +221,7 @@ object CodeListener : Listener {
 				}
 			}
 			Action.LEFT_CLICK_BLOCK -> {
+				e.setCancelled(true);
 				if(block.getRelative(BlockFace.WEST).type == Material.BLACK_CONCRETE) {
 					block.type = Material.BLACK_STAINED_GLASS;
 					block.getRelative(BlockFace.EAST).type = Material.AIR;

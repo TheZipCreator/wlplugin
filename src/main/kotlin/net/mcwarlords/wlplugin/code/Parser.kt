@@ -15,19 +15,24 @@ import org.bukkit.block.Barrel;
 
 import net.mcwarlords.wlplugin.*;
 
+typealias KList<T> = kotlin.collections.List<T>;
+typealias KString = kotlin.String;
+
 // class for ASTs
 sealed class Tree(val loc: Location) {
-	class Do(l: Location, val children: List<Tree>) : Tree(l);
-	class Event(l: Location, val name: kotlin.String, val children: List<Tree>) : Tree(l);
-	class If(l: Location, val conds: List<Tree>, val actions: List<Tree>, val failure: Tree?) : Tree(l);
-	class Builtin(l: Location, val name: kotlin.String, val args: List<Tree>) : Tree(l);
+	class Do(l: Location, val children: KList<Tree>) : Tree(l);
+	class Event(l: Location, val name: String, val children: KList<Tree>) : Tree(l);
+	class If(l: Location, val conds: KList<Tree>, val actions: KList<Tree>, val failure: Tree?) : Tree(l);
+	class For(l: Location, val varName: String, val list: Tree, val body: KList<Tree>) : Tree(l);
+	class Builtin(l: Location, val name: String, val args: KList<Tree>) : Tree(l);
 	class Token(l: Location, val token: net.mcwarlords.wlplugin.code.Token) : Tree(l);
-	class Declare(l: Location, val name: kotlin.String, val value: Tree) : Tree(l);
-	class Set(l: Location, val name: kotlin.String, val value: Tree) : Tree(l);
+	class List(l: Location, val list: KList<Tree>) : Tree(l);
+	class Declare(l: Location, val name: String, val value: Tree) : Tree(l);
+	class Set(l: Location, val name: String, val value: Tree) : Tree(l);
 
 	override fun toString() = when(this) {
-		is Event -> "Event '$name' { ${children.joinToString(" ")} }"
-		is If -> "If { ${buildString { 
+		is Event -> "event '$name' { ${children.joinToString(" ")} }"
+		is If -> "if { ${buildString { 
 			for(i in conds.indices) { 
 				append(conds[i]); 
 				append(" ");
@@ -39,20 +44,24 @@ sealed class Tree(val loc: Location) {
 			}
 		}} } "
 		is Do -> "${children.joinToString(" ")}"
-		is Builtin -> "Builtin '$name' { ${args.joinToString(" ")} }"
+		is Builtin -> "builtin '$name' { ${args.joinToString(" ")} }"
 		is Token -> token.toString();
-		is Declare -> "Declare { $name $value }"
-		is Set -> "Set { $name $value }"
+		is Declare -> "declare { $name $value }"
+		is Set -> "set { $name $value }"
+		is List -> "list { ${list.joinToString(" ")} }"
+		is For -> "for($varName in $list) { ${body.joinToString(" ")} }"
 	}
 
 	fun name() = when(this) {
-		is Do -> "Do"
-		is Event -> "Event"
-		is If -> "If"
-		is Builtin -> "Builtin"
+		is Do -> "do"
+		is Event -> "event"
+		is If -> "if"
+		is Builtin -> "builtin"
 		is Token -> token.name()
-		is Declare -> "Declare"
-		is Set -> "Set"
+		is Declare -> "declare"
+		is Set -> "set"
+		is List -> "list"
+		is For -> "for"
 	}
 }
 
@@ -61,17 +70,19 @@ sealed class Token(val loc: Location) {
 	class If(l: Location) : Token(l);
 	class Lbrack(l: Location) : Token(l);
 	class Rbrack(l: Location) : Token(l);
-	class Event(l: Location, val name: kotlin.String) : Token(l);
-	class Builtin(l: Location, val name: kotlin.String) : Token(l);
+	class Event(l: Location, val name: KString) : Token(l);
+	class Builtin(l: Location, val name: KString) : Token(l);
 	class Do(l: Location) : Token(l);
-	class Variable(l: Location, val name: kotlin.String) : Token(l);
-	class String(l: Location, val string: kotlin.String) : Token(l);
+	class For(l: Location) : Token(l);
+	class Variable(l: Location, val name: KString) : Token(l);
+	class String(l: Location, val string: KString) : Token(l);
 	class Number(l: Location, val num: Double) : Token(l);
 	class Bool(l: Location, val bool: Boolean): Token(l);
-	class Parameter(l: Location, val name: kotlin.String): Token(l);
+	class Parameter(l: Location, val name: KString): Token(l);
 	class Item(l: Location, val item: ItemStack): Token(l)
-	class Declare(l: Location, val name: kotlin.String): Token(l);
-	class Set(l: Location, val name: kotlin.String): Token(l);
+	class List(l: Location): Token(l);
+	class Declare(l: Location, val name: KString): Token(l);
+	class Set(l: Location, val name: KString): Token(l);
 
 	override fun toString(): kotlin.String = when(this) {
 		is If -> "if"
@@ -88,6 +99,8 @@ sealed class Token(val loc: Location) {
 		is Item -> "item '$item'"
 		is Declare -> "declare '$name'"
 		is Set -> "set '$name'"
+		is List -> "list"
+		is For -> "for"
 	}
 
 	fun name(): kotlin.String = when(this) {
@@ -105,6 +118,8 @@ sealed class Token(val loc: Location) {
 		is Item -> "item"
 		is Declare -> "declare"
 		is Set -> "set"
+		is List -> "list"
+		is For -> "for"
 	}
 }
 
@@ -171,12 +186,14 @@ class Parser(var loc: Location) {
 					}
 					Material.DIAMOND_BLOCK -> {
 						var s = readSign();
-						// TODO: check validity of event
+						if(!validEvents.contains(s))
+							throw ParseException(loc, "Invalid event '$s'.");
 						return Token.Event(loc, s);
 					}
 					Material.FURNACE -> return Token.Builtin(loc, readSign());
 					Material.OAK_PLANKS -> return Token.If(loc);
 					Material.MANGROVE_PLANKS -> return Token.Do(loc);
+					Material.MAGMA_BLOCK -> return Token.For(loc);
 					Material.OBSIDIAN -> return Token.Variable(loc, readSign());
 					Material.WHITE_WOOL -> return Token.String(loc, buildString {
 						while(true) {
@@ -206,6 +223,7 @@ class Parser(var loc: Location) {
 						}
 						return next();
 					}
+					Material.END_STONE_BRICKS -> return Token.List(loc)
 					Material.CRIMSON_HYPHAE -> return Token.Declare(loc, readSign())
 					Material.WARPED_HYPHAE -> return Token.Set(loc, readSign())
 					else -> throw ParseException(loc, "Unknown block type: ${b!!.type.toString()}")
@@ -256,7 +274,7 @@ class Parser(var loc: Location) {
 			// this should be safe - if we're not at top level another block should've been parsed
 			throwEOF();
 		}
-		if(topLevel && (tk !is Token.Event))
+		if(topLevel && tk !is Token.Event && tk !is Token.Declare)
 			throw ParseException(tk.loc, "Unexpected $tk at top-level.");
 		when(tk) {
 			is Token.Lbrack, is Token.Rbrack -> {
@@ -288,6 +306,16 @@ class Parser(var loc: Location) {
 				return Tree.Builtin(tk.loc, tk.name, b);
 			}
 			is Token.Do -> return Tree.Do(tk.loc, block())
+			is Token.For -> {
+				var idx = next();
+				if(idx !is Token.Variable)
+					throw ParseException(tk.loc, "A for loop is of the form: for <variable> <list> [ ... ]");
+				var l = nextTree();
+				if(l == null)
+					throwEOF();
+				return Tree.For(tk.loc, idx.name, l, block());
+			}
+			is Token.List -> return Tree.List(tk.loc, block())
 			is Token.Declare -> {
 				var n = nextTree();
 				if(n == null)

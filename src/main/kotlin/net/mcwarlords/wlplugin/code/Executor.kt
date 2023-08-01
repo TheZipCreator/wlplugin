@@ -18,6 +18,7 @@ sealed class Value private constructor() {
 	class Bool(val bool: Boolean) : Value();
 	class Entity(val entity: org.bukkit.entity.Entity) : Value();
 	class Item(val item: ItemStack) : Value()
+	class List(val list: kotlin.collections.List<Value>) : Value()
 
 	fun truthy(): Boolean = when(this) {
 		is Unit -> false
@@ -26,6 +27,7 @@ sealed class Value private constructor() {
 		is Bool -> bool
 		is Entity -> true
 		is Item -> true
+		is List -> list.size > 0
 	}
 
 	override fun toString(): kotlin.String = when(this) {
@@ -35,6 +37,7 @@ sealed class Value private constructor() {
 		is Bool -> bool.toString()
 		is Entity -> entity.toString()
 		is Item -> item.toString()
+		is List -> "[${list.joinToString(", ")}]";
 	}
 
 	fun typeName(): kotlin.String = when(this) {
@@ -44,6 +47,7 @@ sealed class Value private constructor() {
 		is Bool -> "bool"
 		is Entity -> "entity"
 		is Item -> "item"
+		is List -> "list"
 	}
 
 	override operator fun equals(o: Any?): Boolean {
@@ -55,13 +59,24 @@ sealed class Value private constructor() {
 			is Number -> o is Number && o.num == num
 			is Bool -> o is Bool && o.bool == bool
 			is Entity -> o is Entity && o.entity == entity
-			is Item -> o is Item && o.item == item
+			is Item -> o is Item && o.item.isSimilar(item)
+			is List -> {
+				if(o !is List)
+					return false;
+				if(list.size != o.list.size)
+					return false;
+				for(i in list.indices) {
+					if(list[i] != o.list[i])
+						return false;
+				}
+				return true;
+			}
 		}
 	}
 }
 
 // context for interpreting - shared between an executor and all its children
-class ExecutorContext(val event: CEvent, var stopped: Boolean);
+class ExecutorContext(val unit: CodeUnit, val event: CEvent?, var stopped: Boolean);
 
 class ExecutionException(loc: Location?, msg: String) : CodeException(loc, msg);
 
@@ -100,6 +115,18 @@ class Executor(val scope: UInt, val ctx: ExecutorContext, table: MutableMap<Stri
 					args.add(eval(t));
 				return builtins[tree.name]!!(this, tree.loc, args);
 			}
+			is Tree.For -> {
+				var list = eval(tree.list);
+				if(list !is Value.List)
+					throw ExecutionException(tree.list.loc, "${list.typeName()} is not iterable.");
+				var ret: Value = Value.Unit;
+				for(elem in list.list) {
+					var subExec = sub();
+					subExec.vartable[tree.varName] = Var(subExec.scope, elem);
+					ret = subExec.evalChildren(tree.body);
+				}
+				return ret;
+			}
 			is Tree.Token -> {
 				val tk = tree.token;
 				when(tk) {
@@ -123,8 +150,9 @@ class Executor(val scope: UInt, val ctx: ExecutorContext, table: MutableMap<Stri
 					else -> throw ExecutionException(tk.loc, "This should not appear.")
 				}
 			}
+			is Tree.List -> return Value.List(tree.list.map { it -> eval(it) })
 			is Tree.Declare -> {
-				if(vartable.containsKey(tree.name))
+				if(vartable.containsKey(tree.name) && vartable[tree.name]!!.scope == scope)
 					throw ExecutionException(tree.loc, "Variable ${tree.name} already declared. Did you mean to use SET?");
 				vartable[tree.name] = Var(scope, eval(tree.value));
 				return vartable[tree.name]!!.value;
@@ -140,14 +168,21 @@ class Executor(val scope: UInt, val ctx: ExecutorContext, table: MutableMap<Stri
 	}
 	
 	// runs this executor on a tree asynchronously
-	fun run(tree: Tree) {
+	fun run(tree: Tree) { 
+		fun log(msg: String) {
+			if(ctx.event is CPlayerEvent)
+				runTask { ctx.event.player.sendMessage(Utils.escapeText("&_p* &_eError running module: $msg")); }
+			ctx.unit.log(msg);
+		}
 		runTaskAsync {
 			try {
 				eval(tree);
 			} catch(e: CodeException) {
 				ctx.stopped = true;
-				if(ctx.event is PlayerEvent)
-					runTask { ctx.event.player.sendMessage(Utils.escapeText("&_p* &_eError running module: ${e.toChatString()}")); }
+				log(e.toChatString());
+			} catch(e: Exception) {
+				ctx.stopped = true;
+				log("&c${e.message}");
 			}
 		}
 	}

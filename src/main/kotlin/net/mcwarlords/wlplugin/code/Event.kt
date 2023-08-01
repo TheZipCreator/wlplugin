@@ -52,7 +52,13 @@ abstract class CClickEvent(private val impl: PlayerInteractEvent, override val n
 class CLeftClickEvent(impl: PlayerInteractEvent) : CClickEvent(impl, "left-click");
 class CRightClickEvent(impl: PlayerInteractEvent) : CClickEvent(impl, "right-click");
 
+abstract class CSimplePlayerEvent(override val player: Player, override val name: String) : CPlayerEvent;
+
+class CLoopEvent(p: Player) : CSimplePlayerEvent(p, "loop")
+class CSubscribeEvent(p: Player) : CSimplePlayerEvent(p, "subscribe")
+class CUnsubscribeEvent(p: Player) : CSimplePlayerEvent(p, "unsubscribe")
+
 // doesn't seem like there's a way to automate this
-internal val validEvents = listOf(
-	"join", "quit", "left-click", "right-click"
+internal val validEvents = setOf(
+	"join", "quit", "left-click", "right-click", "loop", "subscribe", "unsubscribe"
 );

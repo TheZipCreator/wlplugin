@@ -13,8 +13,10 @@ object CodeCommand : CommandExecutor {
     p.sendMessage(Utils.escapeText("&_p/wlcode n | new <name> &_s- &_dCreates a new unit with the given name. NOTE: make sure there's nothing near (32 blocks), because this may destroy it."));
     p.sendMessage(Utils.escapeText("&_p/wlcode w | warp <name> &_s- &_dWarps to a given unit."));
     p.sendMessage(Utils.escapeText("&_p/wlcode b | build <name> &_s- &_dBuilds a unit. Should be called every time it is modified."));
-    p.sendMessage(Utils.escapeText("&_p/wlcode m | mode &_s- &_dToggles code mode"));
+		p.sendMessage(Utils.escapeText("&_p/wlcode d | delete <name> &_s- &_dDeletes a unit."));
 		p.sendMessage(Utils.escapeText("&_p/wlcode s | subscribe <name> &_s- &_dSubscribes or unsubscribes to a unit."));
+		p.sendMessage(Utils.escapeText("&_p/wlcode l | log <name> &_s- &_dPrints out the debug logs for a unit."));
+    p.sendMessage(Utils.escapeText("&_p/wlcode m | mode &_s- &_dToggles code mode"));
 	}
 
 	val invalidArguments = Utils.escapeText("&_p* &_dInvalid Arguments");
@@ -68,7 +70,7 @@ object CodeCommand : CommandExecutor {
 				}
 				val name = args[1];
 				if(!Data.codeUnits.contains(name)) {
-					p.sendMessage(Utils.escapeText("&_p* &_eUnknown unit $name."));
+					p.sendMessage(Utils.escapeText("&_p* &_eUnknown unit &_e$name&_d."));
 					return@run;
 				}
 				p.teleport(Data.codeUnits[name]!!.location.clone().add(0.0, 2.0, 0.0));
@@ -82,7 +84,7 @@ object CodeCommand : CommandExecutor {
 				}
 				val name = args[1];
 				if(!Data.codeUnits.contains(name)) {
-					p.sendMessage(Utils.escapeText("&_p* &_eUnknown unit $name."));
+					p.sendMessage(Utils.escapeText("&_p* &_eUnknown unit &_e$name&_d."));
 					return@run;
 				}
 				p.sendMessage(Utils.escapeText("&_p* &_dBuilding unit &_e$name&_d..."));
@@ -100,16 +102,51 @@ object CodeCommand : CommandExecutor {
 				}
 				val name = args[1];
 				if(!Data.codeUnits.contains(name)) {
-					p.sendMessage(Utils.escapeText("&_p* &_eUnknown unit $name."));
+					p.sendMessage(Utils.escapeText("&_p* &_eUnknown unit &_e$name&_d."));
 					return@run;
 				}
+				val cu = Data.codeUnits[name]!!;
 				if(pd.subscribed.contains(name)) {
 					pd.subscribed.remove(name);
+					cu.handleEvent(CUnsubscribeEvent(p));
 					p.sendMessage(Utils.escapeText("&_p* &_dUnsubscribed from unit &_e$name&_d."));
 					return@run;
 				}
+				cu.handleEvent(CSubscribeEvent(p));
 				pd.subscribed.add(name);
 				p.sendMessage(Utils.escapeText("&_p* &_dSubscribed to unit &_e$name&_d."));
+			}
+			"d", "delete" -> run {
+				if(args.size != 2) {
+					p.sendMessage(invalidArguments);
+					return@run;
+				}
+				val name = args[1];
+				if(!Data.codeUnits.contains(name)) {
+					p.sendMessage(Utils.escapeText("&_p* &_eUnknown unit &_e$name&_d."));
+					return@run;
+				}
+				val cu = Data.codeUnits[name]!!;
+				if(cu.owner != Data.uuidOf(p.name)) {
+					p.sendMessage(Utils.escapeText("&_p* &_eYou do not own unit $name."));
+					return@run;
+				}
+				Data.codeUnits.remove(name);
+				p.sendMessage(Utils.escapeText("&_p* &_dUnit deleted. Note: Deleting a unit does not physically delete it; you have to do that yourself."));
+			}
+			"l", "log" -> run {
+				if(args.size != 2) {
+					p.sendMessage(invalidArguments);
+					return@run;
+				}
+				val name = args[1];
+				if(!Data.codeUnits.contains(name)) {
+					p.sendMessage(Utils.escapeText("&_p* &_eUnknown unit &_e$name&_d."));
+					return@run;
+				}
+				val cu = Data.codeUnits[name]!!;
+				for(msg in cu.log)
+					p.sendMessage(Utils.escapeText(msg));
 			}
 			else -> p.sendMessage(Utils.escapeText("&_p* &_dInvalid subcommand."))
 		}

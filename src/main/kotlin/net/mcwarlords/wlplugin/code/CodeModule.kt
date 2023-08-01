@@ -17,7 +17,9 @@ class CodeModule : Module {
 							"n", "new",
 							"w", "warp",
 							"b", "build",
-							"m", "mode"
+							"m", "mode",
+							"d", "delete",
+							"l", "log"
 						);
 					return mutableListOf();
 				}	
@@ -32,6 +34,11 @@ class CodeModule : Module {
 				WlPlugin.info("Failed to build unit $name");
 			}
 		}
+		Bukkit.getScheduler().runTaskTimer(WlPlugin.instance, Runnable {
+			for(p in Bukkit.getServer().onlinePlayers) {
+				CLoopEvent(p).execute();
+			}
+		}, 20, 1);
 		WlPlugin.info("wlcode enabled");
 	}
 
@@ -61,6 +68,7 @@ enum class CodeItem(val item: ItemStack) {
 	BUILTIN(mkItem(Material.FURNACE, "&cBuiltin", "&7A built-in function.")),
 	IF(mkItem(Material.OAK_PLANKS, "&6If", "&7Checks whether a condition is true.")),
 	DO(mkItem(Material.MANGROVE_PLANKS, "&6Do", "&7Does multiple commands at once.")),
+	FOR(mkItem(Material.MAGMA_BLOCK, "&6For", "&7Iterates over a collection.")),
 	STRING(mkItem(Material.WHITE_WOOL, "&5String", "&7Stores text.")),
 	NUMBER(mkItem(Material.TARGET, "&5Number", "&7A numerical value.")),
 	TRUE(mkItem(Material.LIME_TERRACOTTA, "&5True", "&7The boolean value 'true'.")),
@@ -68,6 +76,7 @@ enum class CodeItem(val item: ItemStack) {
 	VARIABLE(mkItem(Material.OBSIDIAN, "&5Variable", "&7A value that can change.")),
 	PARAMETER(mkItem(Material.PRISMARINE_BRICKS, "&5Parameter", "&7Variables associated with an event or function.")),
 	ITEM(mkItem(Material.BARREL, "&5Item", "&7An item.")),
+	LIST(mkItem(Material.END_STONE_BRICKS, "&5List", "&7A list of multiple values.")),
 	DECLARE(mkItem(Material.CRIMSON_HYPHAE, "&3Declare", "&7Declares a variable.")),
 	SET(mkItem(Material.WARPED_HYPHAE, "&3Set", "&7Sets a previously declared variable.")),
 	COMMENT(mkItem(Material.REDSTONE_LAMP, "&8Comment", "&7Text that is ignored. Useful for", "&7recording what something does."))

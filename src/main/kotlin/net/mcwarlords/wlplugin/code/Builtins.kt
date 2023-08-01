@@ -4,6 +4,7 @@ import org.bukkit.entity.*;
 import org.bukkit.*;
 import org.bukkit.inventory.*;
 import kotlin.math.pow;
+import kotlin.random.*;
 
 import net.mcwarlords.wlplugin.*;
 
@@ -85,8 +86,35 @@ private fun getPlayer(loc: Location, v: Value): Player {
 	return v.entity;
 }
 
+private fun Value.getNum(loc: Location): Double {
+	if(this !is Value.Number)
+		throw ExecutionException(loc, "Number expected, got ${typeName()}.");
+	return num;
+}
+private fun Value.getBool(loc: Location): Boolean {
+	if(this !is Value.Bool)
+		throw ExecutionException(loc, "Bool expected, got ${typeName()}.");
+	return bool;
+}
+
+private fun getRange(loc: Location, args: List<Value>, name: String): Pair<Int, Int> {
+	argsBetween(loc, args, name, 1, 2);
+	var min: Int = 0;
+	var max: Int = 0;
+	if(args.size == 1)
+		max = args[0].getNum(loc).toInt();
+	else {
+		min = args[0].getNum(loc).toInt();
+		min = args[1].getNum(loc).toInt();
+	}
+	if(max < min)
+		min = max.also { max = min };
+	return Pair(min, max);
+}
+
 internal val builtins = mapOf<String, Builtin>(
 	// player actions
+	// sends a message to a player
 	"send-message" to fn@ { _, loc, args ->
 		argsAtLeast(loc, args, "send-message", 1);
 		val player = getPlayer(loc, args[0]);
@@ -97,6 +125,7 @@ internal val builtins = mapOf<String, Builtin>(
 		runTask { player.sendMessage(msg); }
 		return@fn Value.Unit;
 	},
+	// gives an item to a player
 	"give-item" to fn@ { _, loc, args ->
 		argsAtLeast(loc, args, "give-item", 1);
 		val player = getPlayer(loc, args[0]);
@@ -113,6 +142,17 @@ internal val builtins = mapOf<String, Builtin>(
 		};
 		return@fn Value.Unit;
 	},
+	// player values
+	// gets the item a player is holding in their main hand
+	"main-hand-item" to fn@ { _, loc, args ->
+		argsEqual(loc, args, "held-item", 1);
+		Value.Item(getPlayer(loc, args[0]).inventory.itemInMainHand);
+	},
+	// gets the item a player is holding in their off hand
+	"off-hand-item" to fn@ { _, loc, args ->
+		argsEqual(loc, args, "held-item", 1);
+		Value.Item(getPlayer(loc, args[0]).inventory.itemInOffHand);
+	},
 	// operators
 	"+" to operation("+", {a, b -> a+b}),
 	"-" to operation("-", {a, b -> a-b}),
@@ -126,4 +166,39 @@ internal val builtins = mapOf<String, Builtin>(
 	">=" to comparison(">=", {a, b -> a >= b}),
 	"=" to equality("=", {a, b -> a == b}),
 	"!=" to equality("!=", {a, b -> a != b}),
+	// numeric actions
+	// gets a random float between 0 and 1
+	"rand-float" to fn@ { _, loc, args ->
+		argsEqual(loc, args, "rand-float", 0);
+		Value.Number(Random.nextDouble())
+	},
+	// gets a random int between 0 and 1
+	"rand-int" to fn@ { _, loc, args ->
+		var range = getRange(loc, args, "rand-int");
+		Value.Number(Random.nextInt(range.first, range.second+1).toDouble())
+	},
+	// list functions
+	// generates a range from a (inclusive) to b (exclusive)
+	"range" to fn@ { _, loc, args ->
+		var range = getRange(loc, args, "range");
+		if(range.first == range.second)
+			return@fn Value.List(listOf());
+		return@fn Value.List((range.first..range.second-1).map { it -> Value.Number(it.toDouble()) });
+	},
+	// misc
+	// logs to the unit's log
+	"log" to { exec, loc, args ->
+		exec.ctx.unit.log(args.joinToString(""));
+		Value.Unit
+	},
+	// cancels event
+	"set-cancelled" to { exec, loc, args ->
+		argsEqual(loc, args, "set-cancelled", 1);
+		val evt = exec.ctx.event;
+		if(evt !is CCancellable)
+			throw ExecutionException(loc, "Event '${evt?.name}' is not cancellable.");
+		var b = args[0].getBool(loc);
+		runTask { evt.cancelled = b }
+		Value.Unit
+	}
 );

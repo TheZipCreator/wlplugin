@@ -16,6 +16,8 @@ class CodeUnit(val location: Location, val owner: String) {
 	}
 
 	var events: Map<String, Tree> = mapOf();
+	var globals: MutableMap<String, Var> = mutableMapOf(); // stores global variables. all variables inside should have scope 0
+	var log: MutableList<String> = mutableListOf(); // stores a log
 
 	fun toJSON(): JSONObject {
 		var o = JSONObject();
@@ -34,6 +36,10 @@ class CodeUnit(val location: Location, val owner: String) {
 				is Tree.Event -> {
 					map[t.name] = t;
 				}
+				is Tree.Declare -> {
+					var exec = Executor(0u, ExecutorContext(this, null, false), globals)
+					exec.run(t);
+				}
 				else -> throw ParseException(t.loc, "Non-event at top level.")
 			}
 		}
@@ -43,8 +49,16 @@ class CodeUnit(val location: Location, val owner: String) {
 	fun handleEvent(e: CEvent) {
 		if(!events.containsKey(e.name))
 			return;
-		var exec = Executor(0u, ExecutorContext(e, false));
+		var exec = Executor(1u, ExecutorContext(this, e, false), globals);
 		exec.run(events[e.name]!!);
 		return;
+	}
+
+	val MAX_LOG_SIZE = 100;
+
+	fun log(s: Any) {
+		log.add(s.toString());
+		if(log.size > MAX_LOG_SIZE)
+			log.removeAt(0);
 	}
 }
