@@ -31,7 +31,7 @@ class CodeModule : Module {
 			try {
 				Data.codeUnits[name]!!.build();
 			} catch(e: CodeException) {
-				WlPlugin.warn("Failed to build unit $name: ${e.toChatString()}");
+				WlPlugin.warn(Utils.escapeText("Failed to build unit $name: ${e.toChatString()}"));
 			}
 		}
 		Bukkit.getScheduler().runTaskTimer(WlPlugin.instance, Runnable {
@@ -39,6 +39,9 @@ class CodeModule : Module {
 				CLoopEvent(p).execute();
 			}
 		}, 20, 1);
+		Bukkit.getScheduler().runTaskTimer(WlPlugin.instance, Runnable {
+			CCacheEvent().execute();
+		}, 0, 36000);
 		WlPlugin.info("wlcode enabled");
 	}
 

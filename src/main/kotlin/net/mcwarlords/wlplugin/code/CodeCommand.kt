@@ -16,6 +16,8 @@ object CodeCommand : CommandExecutor {
 		p.sendMessage(Utils.escapeText("&_p/wlcode d | delete <name> &_s- &_dDeletes a unit."));
 		p.sendMessage(Utils.escapeText("&_p/wlcode s | subscribe <name> &_s- &_dSubscribes or unsubscribes to a unit."));
 		p.sendMessage(Utils.escapeText("&_p/wlcode l | log <name> &_s- &_dPrints out the debug logs for a unit."));
+		p.sendMessage(Utils.escapeText("&_p/wlcode cc | cacheclear <name> &_s- &_dClears the cache of a unit and builds it without loading cache."));
+		p.sendMessage(Utils.escapeText("&_p/wlcode cv | cacheview <name> &_s- &_dViews the cache of a unit."));
     p.sendMessage(Utils.escapeText("&_p/wlcode m | mode &_s- &_dToggles code mode"));
 	}
 
@@ -31,6 +33,32 @@ object CodeCommand : CommandExecutor {
       return true;
     }
     val pd = Data.getPlayerData(p);
+		fun buildUnit(u: CodeUnit, loadCache: Boolean = true) {
+			p.sendMessage(Utils.escapeText("&_p* &_dBuilding unit &_e${u.name}&_d..."));
+			try {
+				u.build(loadCache);
+				p.sendMessage(Utils.escapeText("&_p* &_dFinished building unit."));
+			} catch(e: ParseException) {
+				p.sendMessage(Utils.escapeText("&_p* &_eError building unit: ${e.toChatString()}"));
+			}
+		}
+		fun getCodeUnit(owned: Boolean = false): CodeUnit? {
+			if(args.size != 2) {
+				p.sendMessage(invalidArguments);
+				return null;
+			}
+			val name = args[1];
+			if(!Data.codeUnits.contains(name)) {
+				p.sendMessage(Utils.escapeText("&_p* &_eUnknown unit &_e$name&_d."));
+				return null;
+			}
+			val cu = Data.codeUnits[name]!!;
+			if(!owned && cu.owner != Data.uuidOf(p.name)) {
+				p.sendMessage(Utils.escapeText("&_p* &_eYou do not own unit $name."));
+				return null;
+			}
+			return cu;
+		}
 		when(args[0]) {
 			"h", "help" -> sendHelpMessage(p)
 			"n", "new" -> run {
@@ -79,75 +107,41 @@ object CodeCommand : CommandExecutor {
 			}
 			"m", "mode" -> toggleCodeMode(p)
 			"b", "build" -> run {
-				if(args.size != 2) {
-					p.sendMessage(invalidArguments);
-					return@run;
-				}
-				val name = args[1];
-				if(!Data.codeUnits.contains(name)) {
-					p.sendMessage(Utils.escapeText("&_p* &_eUnknown unit &_e$name&_d."));
-					return@run;
-				}
-				p.sendMessage(Utils.escapeText("&_p* &_dBuilding unit &_e$name&_d..."));
-				try {
-					Data.codeUnits[name]!!.build();
-					p.sendMessage(Utils.escapeText("&_p* &_dFinished building unit."));
-				} catch(e: ParseException) {
-					p.sendMessage(Utils.escapeText("&_p* &_eError building unit: ${e.toChatString()}"));
-				}
+				buildUnit(getCodeUnit() ?: return@run);
 			}
 			"s", "subscribe" -> run {
-				if(args.size != 2) {
-					p.sendMessage(invalidArguments);
-					return@run;
-				}
-				val name = args[1];
-				if(!Data.codeUnits.contains(name)) {
-					p.sendMessage(Utils.escapeText("&_p* &_eUnknown unit &_e$name&_d."));
-					return@run;
-				}
-				val cu = Data.codeUnits[name]!!;
-				if(pd.subscribed.contains(name)) {
-					pd.subscribed.remove(name);
+				val cu = getCodeUnit() ?: return@run;
+				if(pd.subscribed.contains(cu.name)) {
+					pd.subscribed.remove(cu.name);
 					cu.handleEvent(CUnsubscribeEvent(p));
-					p.sendMessage(Utils.escapeText("&_p* &_dUnsubscribed from unit &_e$name&_d."));
+					p.sendMessage(Utils.escapeText("&_p* &_dUnsubscribed from unit &_e${cu.name}&_d."));
 					return@run;
 				}
 				cu.handleEvent(CSubscribeEvent(p));
-				pd.subscribed.add(name);
-				p.sendMessage(Utils.escapeText("&_p* &_dSubscribed to unit &_e$name&_d."));
+				pd.subscribed.add(cu.name);
+				p.sendMessage(Utils.escapeText("&_p* &_dSubscribed to unit &_e${cu.name}&_d."));
 			}
 			"d", "delete" -> run {
-				if(args.size != 2) {
-					p.sendMessage(invalidArguments);
-					return@run;
-				}
-				val name = args[1];
-				if(!Data.codeUnits.contains(name)) {
-					p.sendMessage(Utils.escapeText("&_p* &_eUnknown unit &_e$name&_d."));
-					return@run;
-				}
-				val cu = Data.codeUnits[name]!!;
-				if(cu.owner != Data.uuidOf(p.name)) {
-					p.sendMessage(Utils.escapeText("&_p* &_eYou do not own unit $name."));
-					return@run;
-				}
-				Data.codeUnits.remove(name);
-				p.sendMessage(Utils.escapeText("&_p* &_dUnit deleted. Note: Deleting a unit does not physically delete it; you have to do that yourself."));
+				val cu = getCodeUnit(true) ?: return@run;
+				Data.codeUnits.remove(cu.name);
+				p.sendMessage(Utils.escapeText("&_p* &_dUnit &_e${cu.name}&_d deleted. Note: Deleting a unit does not physically delete it; you have to do that yourself."));
 			}
 			"l", "log" -> run {
-				if(args.size != 2) {
-					p.sendMessage(invalidArguments);
-					return@run;
-				}
-				val name = args[1];
-				if(!Data.codeUnits.contains(name)) {
-					p.sendMessage(Utils.escapeText("&_p* &_eUnknown unit &_e$name&_d."));
-					return@run;
-				}
-				val cu = Data.codeUnits[name]!!;
+				val cu = getCodeUnit() ?: return@run;
 				for(msg in cu.log)
 					p.sendMessage(Utils.escapeText(msg));
+			}
+			"cc", "cacheclear" -> run {
+				val cu = getCodeUnit(true) ?: return@run;
+				Data.cacheClear(cu.name);
+				p.sendMessage(Utils.escapeText("&_p* &_dCleared cache."));
+				buildUnit(cu, false);
+			}
+			"cv", "cacheview" -> run {
+				val cu = getCodeUnit(true) ?: return@run;
+				var obj = Data.cacheObject(cu.name);
+				obj.put("__type", "map"); // make it readable by Value.deserialize()
+				p.sendMessage(Value.deserialize(obj).toString());
 			}
 			else -> p.sendMessage(Utils.escapeText("&_p* &_dInvalid subcommand."))
 		}

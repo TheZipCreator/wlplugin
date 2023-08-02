@@ -2,13 +2,16 @@ package net.mcwarlords.wlplugin;
 
 import java.io.*;
 import java.util.*;
-import net.mcwarlords.wlplugin.code.CodeUnit;
+
+import net.mcwarlords.wlplugin.code.*;
+
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.json.simple.*;
+import org.json.simple.parser.ParseException;
 import org.json.simple.parser.*;
 
 import com.google.common.collect.HashBiMap;
@@ -36,6 +39,8 @@ public class Data {
 				new File("plugins/wlplugin").mkdir();
 			if(!new File("plugins/wlplugin/tmp").exists())
 				new File("plugins/wlplugin/tmp").mkdir();
+			if(!new File("plugins/wlplugin/cache").exists())
+				new File("plugins/wlplugin/cache").mkdir();
 			String[] files = {"playerData.json", "serverData.json", "uuid.json"};
 			for(String file : files) {
 				if(!new File("plugins/wlplugin/"+file).exists()) {
@@ -167,4 +172,71 @@ public class Data {
 	public static boolean playerExists(String name) {
 		return UUIDs.inverse().containsKey(name);
 	}
+
+	static private String cacheName(String namespace) {
+		return "plugins/wlplugin/cache/"+namespace+".json";
+	}
+
+	// I should probably store these temporarily somewhere (so the file isn't constantly opened and closed upon cache event) but
+	// it's probably not enough of an issue to bother optimizing
+
+	/** Gets a cached value */
+	public static Value cacheGet(String namespace, String name) throws IOException {
+		if(!new File(cacheName(namespace)).exists())
+			return null;
+		var cname = cacheName(namespace);
+		try {
+			JSONObject obj = cacheObject(namespace);
+			if(!obj.containsKey(name))
+				return null;
+			return Value.deserialize(obj.get(name));
+		} catch(FileNotFoundException e) {
+			// unreachable
+			e.printStackTrace();
+			return null;	
+		}
+	}
+
+	/** Sets a cached value */
+	public static void cacheSet(String namespace, String name, Value val) throws IOException {
+		var cname = cacheName(namespace);
+		try {
+			JSONObject obj = cacheObject(namespace);
+			obj.put(name, val.serialize());
+			FileWriter fw = new FileWriter(cname);
+			fw.write(obj.toString());
+			fw.close();
+		} catch(FileNotFoundException e) {
+			// unreachable
+			e.printStackTrace();
+		}
+	}
+
+	/** Clears a cache */
+	public static void cacheClear(String namespace) throws IOException {
+		var cname = cacheName(namespace);
+		if(!new File(cname).exists())
+			return;
+		try {
+			FileWriter fw = new FileWriter(cname);
+			fw.write("{}");
+			fw.close();
+		} catch(FileNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/** Gets a cache object */
+	public static JSONObject cacheObject(String namespace) throws IOException {
+		var cname = cacheName(namespace);
+		try {
+			return (JSONObject)(new JSONParser().parse(new FileReader(cname)));
+		} catch(FileNotFoundException e) {
+			return new JSONObject();
+		} catch(ParseException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
 }

@@ -26,8 +26,10 @@ class CodeUnit(val location: Location, val name: String, val owner: String) {
 		return o;
 	}
 
-	fun build() {
+	fun build(loadCache: Boolean = true) {
 		try {
+			if(loadCache)
+				handleEvent(CCacheEvent(), true);
 			var tree = Parser.parse(location.clone().add(1.0, 0.0, 0.0));
 			globals = mutableMapOf();
 			if(tree !is Tree.Do)
@@ -46,6 +48,7 @@ class CodeUnit(val location: Location, val name: String, val owner: String) {
 				}
 			}
 			events = map;
+			handleEvent(CInitEvent());
 		} catch(e: CodeException) {
 			log("&c${e.toChatString()}");
 			throw e;
@@ -55,11 +58,11 @@ class CodeUnit(val location: Location, val name: String, val owner: String) {
 		}
 	}
 
-	fun handleEvent(e: CEvent) {
+	fun handleEvent(e: CEvent, sync: Boolean = false) {
 		if(!events.containsKey(e.name))
 			return;
 		var exec = Executor(1u, ExecutorContext(this, e, false), globals);
-		exec.run(events[e.name]!!, true);
+		exec.run(events[e.name]!!, true, sync);
 		return;
 	}
 

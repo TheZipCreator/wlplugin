@@ -145,7 +145,7 @@ private fun getRange(loc: Location, args: List<Value>, name: String): Pair<Int, 
 		max = args[0].getNum(loc).toInt();
 	else {
 		min = args[0].getNum(loc).toInt();
-		min = args[1].getNum(loc).toInt();
+		max = args[1].getNum(loc).toInt();
 	}
 	if(max < min)
 		min = max.also { max = min };
@@ -451,7 +451,18 @@ internal val builtins = mapOf<String, Builtin>(
 	},
 	// broadcasts a message
 	"broadcast" to { _, _, args ->
-		Utils.sendMessage("global", args.joinToString(""));
+		Utils.sendMessage("global", args.joinToString("").replace("§", "&"));
 		Value.Unit
+	},
+	"cache-set" to { exec, loc, args ->
+		argsEqual(loc, args, "cache-set", 2);
+		val name = args[0].toString();
+		Data.cacheSet(exec.ctx.unit.name, name, args[1]);
+		Value.Unit
+	},
+	"cache-get" to fn@ { exec, loc, args ->
+		argsEqual(loc, args, "cache-get", 1);
+		val name = args[0].toString();
+		Data.cacheGet(exec.ctx.unit.name, name) ?: Value.Unit
 	}
 );

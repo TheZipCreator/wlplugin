@@ -9,7 +9,11 @@ import org.bukkit.event.player.*;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.*;
 
+import org.json.simple.*;
+
 import net.mcwarlords.wlplugin.*;
+
+class SerializationException(msg: String) : Exception(msg);
 
 sealed class Value private constructor() {
 	object Unit : Value();
@@ -81,6 +85,72 @@ sealed class Value private constructor() {
 			}
 			is Map -> o is Map && o.map == map
 			is Loc -> o is Loc && o.loc == loc
+		}
+	}
+	
+	// converts to a directly serializable format.
+	@JvmOverloads fun serialize(depth: Int = 0): Any? {
+		if(depth > 100)
+			throw SerializationException("Depth limit (100) exceeded");
+		return when(this) {
+			is Unit -> null
+			is String -> string
+			is Number -> num
+			is Bool -> bool
+			is Entity -> throw SerializationException("Entity can not be serialized!")
+			is Item -> {
+				var obj = JSONObject();
+				obj.put("__type", "item");
+				obj.put("data", item.serialize());
+				obj;
+			}
+			is List -> {
+				var array = JSONArray();
+				for(item in list)
+					array.add(item.serialize(depth+1));
+				array;
+			}
+			is Map -> {
+				var obj = JSONObject();
+				for(key in map.keys)
+					obj.put(key, map[key]!!.serialize(depth+1));
+				obj.put("__type", "map");
+				obj;
+			}
+			is Loc -> Utils.serializeLocation(loc)
+		}
+	}
+
+	companion object {
+		@JvmStatic fun deserialize(obj: Any?): Value = when(obj) {
+			null -> Value.Unit
+			is KString -> String(obj)
+			is Double -> Number(obj)
+			is Boolean -> Bool(obj)
+			is JSONArray -> {
+				var list = mutableListOf<Value>();
+				for(item in obj)
+					list.add(deserialize(item));
+				List(list);
+			}
+			is JSONObject -> {
+				val type = obj["__type"]!! as KString;
+				when(type) {
+					"map" -> {
+						var map = mutableMapOf<KString, Value>();
+						obj.forEach fn@ { key, v ->
+							val k = key as KString;
+							if(k == "__type")
+								return@fn;
+							map[k] = deserialize(v);
+						}
+						Map(map)
+					}
+					"item" -> Value.Item(ItemStack.deserialize(obj["data"]!! as MutableMap<KString, Any?>))
+					else -> throw SerializationException("Invalid type '$type'.");
+				}
+			}
+			else -> throw SerializationException("Unknown value.")
 		}
 	}
 }
@@ -217,13 +287,13 @@ class Executor(val scope: UInt, val ctx: ExecutorContext, table: MutableMap<Stri
 	}
 	
 	// runs this executor on a tree asynchronously
-	fun run(tree: Tree, returnExpected: Boolean = false) { 
+	fun run(tree: Tree, returnExpected: Boolean = false, sync: Boolean = false) { 
 		fun log(msg: String) {
 			if(ctx.event is CPlayerEvent)
 				runTask { ctx.event.player.sendMessage(Utils.escapeText("&_p* &_eError running module: $msg")); }
 			ctx.unit.log(msg);
 		}
-		runTaskAsync {
+		val task: () -> Unit = {
 			try {
 				eval(tree);
 			} catch(e: Return) {
@@ -238,5 +308,9 @@ class Executor(val scope: UInt, val ctx: ExecutorContext, table: MutableMap<Stri
 				log("&c${e.message}");
 			}
 		}
+		if(sync)
+			task();
+		else
+			runTaskAsync(task);
 	}
 }

@@ -22,13 +22,18 @@ sealed interface CEvent {
 }
 
 // for events containing just a name
-abstract class CSimpleEvent(val name: String);
+abstract class CSimpleEvent(override val name: String) : CEvent;
 
 // ran when the unit is initialized
 class CInitEvent() : CSimpleEvent("init");
 // ran when data is being saved. this is a good place to store things to cache!
 // note: this event is the only one that runs sychronously. do not do any large operations here.
-class CCache() : CSimpleEvent("cache");
+class CCacheEvent() : CSimpleEvent("cache") {
+	override fun execute() {
+		for(u in Data.codeUnits.values)
+			u.handleEvent(this, true);
+	}
+}
 
 // a cancellable event
 interface CCancellable {
@@ -91,5 +96,5 @@ class CCommandEvent(override val player : Player, val command: String, val args:
 
 // doesn't seem like there's a way to automate this
 internal val validEvents = setOf(
-	"join", "quit", "left-click", "right-click", "loop", "subscribe", "unsubscribe", "command"
+	"join", "quit", "left-click", "right-click", "loop", "subscribe", "unsubscribe", "command", "init", "cache"
 );
