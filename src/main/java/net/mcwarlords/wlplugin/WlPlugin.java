@@ -58,7 +58,7 @@ public class WlPlugin extends JavaPlugin {
 			public void run() {
 				Data.saveData();
 			}
-		}.runTaskTimer(this, 0, 36000);
+		}.runTaskTimer(this, 20, 36000);
 	}
 
 	@Override public void onDisable() {

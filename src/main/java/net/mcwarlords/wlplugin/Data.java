@@ -85,7 +85,8 @@ public class Data {
 		if(jsonServerData.containsKey("codeUnits")) {
 			JSONObject jsonCodeUnits = (JSONObject)jsonServerData.get("codeUnits");
 			for(Object o : jsonCodeUnits.keySet()) {
-				codeUnits.put((String)o, CodeUnit.fromJSON((JSONObject)jsonCodeUnits.get(o)));
+				String name = (String)o;
+				codeUnits.put(name, CodeUnit.fromJSON(name, (JSONObject)jsonCodeUnits.get(o)));
 			}
 		}
 		WlPlugin.addListener(

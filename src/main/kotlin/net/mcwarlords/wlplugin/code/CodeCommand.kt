@@ -43,9 +43,10 @@ object CodeCommand : CommandExecutor {
 					p.sendMessage(Utils.escapeText("&_p* &_eUnit $name already exists."));
 					return@run;
 				}
+				p.sendMessage(Utils.escapeText("&_p* &_dCreating unit...&_d."));
 				var l = p.location.block.location;
 				l.y = 319.0;
-				var cu = CodeUnit(l, Data.uuidOf(p.name));
+				var cu = CodeUnit(l, name, Data.uuidOf(p.name));
 				var w = l.world!!;
 				for(y in -64..319) {
 					for(x in 0..8) {

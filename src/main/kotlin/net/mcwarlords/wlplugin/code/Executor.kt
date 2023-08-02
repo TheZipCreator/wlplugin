@@ -13,12 +13,14 @@ import net.mcwarlords.wlplugin.*;
 
 sealed class Value private constructor() {
 	object Unit : Value();
-	class String(val string: kotlin.String) : Value();
+	class String(val string: KString) : Value();
 	class Number(val num: Double) : Value();
 	class Bool(val bool: Boolean) : Value();
 	class Entity(val entity: org.bukkit.entity.Entity) : Value();
 	class Item(val item: ItemStack) : Value()
-	class List(val list: kotlin.collections.List<Value>) : Value()
+	class List(val list: MutableList<Value>) : Value()
+	class Map(val map: MutableMap<KString, Value>) : Value()
+	class Loc(val loc: Location) : Value()
 
 	fun truthy(): Boolean = when(this) {
 		is Unit -> false
@@ -28,6 +30,8 @@ sealed class Value private constructor() {
 		is Entity -> true
 		is Item -> true
 		is List -> list.size > 0
+		is Map -> true
+		is Loc -> true
 	}
 
 	override fun toString(): kotlin.String = when(this) {
@@ -35,9 +39,11 @@ sealed class Value private constructor() {
 		is String -> string
 		is Number -> num.toString()
 		is Bool -> bool.toString()
-		is Entity -> entity.toString()
+		is Entity -> entity.uniqueId.toString()
 		is Item -> item.toString()
 		is List -> "[${list.joinToString(", ")}]";
+		is Map -> map.toString()
+		is Loc -> loc.toString()
 	}
 
 	fun typeName(): kotlin.String = when(this) {
@@ -48,6 +54,8 @@ sealed class Value private constructor() {
 		is Entity -> "entity"
 		is Item -> "item"
 		is List -> "list"
+		is Map -> "map"
+		is Loc -> "location"
 	}
 
 	override operator fun equals(o: Any?): Boolean {
@@ -71,6 +79,8 @@ sealed class Value private constructor() {
 				}
 				return true;
 			}
+			is Map -> o is Map && o.map == map
+			is Loc -> o is Loc && o.loc == loc
 		}
 	}
 }
@@ -79,6 +89,9 @@ sealed class Value private constructor() {
 class ExecutorContext(val unit: CodeUnit, val event: CEvent?, var stopped: Boolean);
 
 class ExecutionException(loc: Location?, msg: String) : CodeException(loc, msg);
+class Return(loc: Location, value: Value) : CodeException(loc, "Unexpected return.");
+class Break(loc: Location) : CodeException(loc, "Unexpected break.");
+class Continue(loc: Location) : CodeException(loc, "Unexpected continue.");
 
 // a variable
 class Var(val scope: UInt, var value: Value);
@@ -120,11 +133,31 @@ class Executor(val scope: UInt, val ctx: ExecutorContext, table: MutableMap<Stri
 				if(list !is Value.List)
 					throw ExecutionException(tree.list.loc, "${list.typeName()} is not iterable.");
 				var ret: Value = Value.Unit;
-				for(elem in list.list) {
-					var subExec = sub();
-					subExec.vartable[tree.varName] = Var(subExec.scope, elem);
-					ret = subExec.evalChildren(tree.body);
-				}
+				try {
+					for(elem in list.list) {
+						var subExec = sub();
+						subExec.vartable[tree.varName] = Var(subExec.scope, elem);
+						try {
+							ret = subExec.evalChildren(tree.body);
+						} catch(e: Continue) {
+							continue;
+						}
+					}
+				} catch(e: Break) {}
+				return ret;
+			}
+			is Tree.While -> {
+				var ret: Value = Value.Unit;
+				try {
+					while(eval(tree.cond).truthy()) {
+						var subExec = sub();
+						try {
+							ret = subExec.evalChildren(tree.body);
+						} catch(e: Continue) {
+							continue;
+						}
+					}
+				} catch(e: Break) {}
 				return ret;
 			}
 			is Tree.Token -> {
@@ -138,19 +171,34 @@ class Executor(val scope: UInt, val ctx: ExecutorContext, table: MutableMap<Stri
 							throw ExecutionException(tk.loc, "Unbound variable ${tk.name}");
 						return vartable[tk.name]!!.value;
 					}
-					is Token.Parameter -> return when(tk.name) {
+					is Token.Parameter -> when(tk.name) {
 						"player" -> {
 							if(ctx.event !is CPlayerEvent) 
-								throw ExecutionException(tk.loc, "Paramater 'player' is only valid for player events.");
+								throw ExecutionException(tk.loc, "Parameter 'player' is only valid for player events.");
 							return Value.Entity(ctx.event.player)
+						}
+						"command" -> {
+							if(ctx.event !is CCommandEvent)
+								throw ExecutionException(tk.loc, "Parameter 'command' is only valid for the command event.");
+							return Value.String(ctx.event.command);
+						}
+						"args" -> {
+							if(ctx.event !is CCommandEvent)
+								throw ExecutionException(tk.loc, "Parameter 'args' is only valid for the command event.");
+							return Value.List(ctx.event.args.map { Value.String(it) }.toMutableList());
 						}
 						else -> throw ExecutionException(tk.loc, "Invalid parameter ${tk.name}")
 					}
 					is Token.Item -> return Value.Item(tk.item)
+					is Token.Unit -> return Value.Unit
+					is Token.Loc -> return Value.Loc(tk.location)
+					is Token.Break -> throw Break(tk.loc)
+					is Token.Continue -> throw Continue(tk.loc)
 					else -> throw ExecutionException(tk.loc, "This should not appear.")
 				}
 			}
-			is Tree.List -> return Value.List(tree.list.map { it -> eval(it) })
+			is Tree.List -> return Value.List(tree.list.map { eval(it) }.toMutableList())
+			is Tree.Map -> return Value.Map((tree.keys.map { eval(it).toString() } zip tree.values.map { eval(it) }).toMap().toMutableMap()) // one liner!
 			is Tree.Declare -> {
 				if(vartable.containsKey(tree.name) && vartable[tree.name]!!.scope == scope)
 					throw ExecutionException(tree.loc, "Variable ${tree.name} already declared. Did you mean to use SET?");
@@ -164,11 +212,12 @@ class Executor(val scope: UInt, val ctx: ExecutorContext, table: MutableMap<Stri
 				vartable[tree.name]!!.value = eval(tree.value);
 				return v;
 			}
+			is Tree.Return -> throw Return(tree.loc, eval(tree.value));
 		}
 	}
 	
 	// runs this executor on a tree asynchronously
-	fun run(tree: Tree) { 
+	fun run(tree: Tree, returnExpected: Boolean = false) { 
 		fun log(msg: String) {
 			if(ctx.event is CPlayerEvent)
 				runTask { ctx.event.player.sendMessage(Utils.escapeText("&_p* &_eError running module: $msg")); }
@@ -177,6 +226,10 @@ class Executor(val scope: UInt, val ctx: ExecutorContext, table: MutableMap<Stri
 		runTaskAsync {
 			try {
 				eval(tree);
+			} catch(e: Return) {
+				ctx.stopped = true;
+				if(!returnExpected)
+					log(e.toChatString())
 			} catch(e: CodeException) {
 				ctx.stopped = true;
 				log(e.toChatString());

@@ -8,10 +8,10 @@ import org.bukkit.*;
 import org.bukkit.event.*;
 import org.bukkit.event.player.*;
 
-class CodeUnit(val location: Location, val owner: String) {
+class CodeUnit(val location: Location, val name: String, val owner: String) {
 	companion object {
-		@JvmStatic fun fromJSON(o: JSONObject): CodeUnit {
-			return CodeUnit(Utils.deserializeLocation(o["location"]), o["owner"] as String);
+		@JvmStatic fun fromJSON(name: String, o: JSONObject): CodeUnit {
+			return CodeUnit(Utils.deserializeLocation(o["location"]), name, o["owner"] as String);
 		}
 	}
 
@@ -27,30 +27,39 @@ class CodeUnit(val location: Location, val owner: String) {
 	}
 
 	fun build() {
-		var tree = Parser.parse(location.clone().add(1.0, 0.0, 0.0));
-		if(tree !is Tree.Do)
-			throw ParseException(tree.loc, "Invalid tree.");
-		var map  = mutableMapOf<String, Tree>();
-		for(t in tree.children) {
-			when(t) {
-				is Tree.Event -> {
-					map[t.name] = t;
+		try {
+			var tree = Parser.parse(location.clone().add(1.0, 0.0, 0.0));
+			globals = mutableMapOf();
+			if(tree !is Tree.Do)
+				throw ParseException(tree.loc, "Invalid tree.");
+			var map  = mutableMapOf<String, Tree>();
+			for(t in tree.children) {
+				when(t) {
+					is Tree.Event -> {
+						map[t.name] = t;
+					}
+					is Tree.Declare -> {
+						var exec = Executor(0u, ExecutorContext(this, null, false), globals)
+						exec.run(t);
+					}
+					else -> throw ParseException(t.loc, "Non-event at top level.")
 				}
-				is Tree.Declare -> {
-					var exec = Executor(0u, ExecutorContext(this, null, false), globals)
-					exec.run(t);
-				}
-				else -> throw ParseException(t.loc, "Non-event at top level.")
 			}
+			events = map;
+		} catch(e: CodeException) {
+			log("&c${e.toChatString()}");
+			throw e;
+		} catch(e: Exception) {
+			log("&c${e.message}");
+			throw e;
 		}
-		events = map;
 	}
 
 	fun handleEvent(e: CEvent) {
 		if(!events.containsKey(e.name))
 			return;
 		var exec = Executor(1u, ExecutorContext(this, e, false), globals);
-		exec.run(events[e.name]!!);
+		exec.run(events[e.name]!!, true);
 		return;
 	}
 

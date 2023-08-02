@@ -15,8 +15,8 @@ import org.bukkit.block.Barrel;
 
 import net.mcwarlords.wlplugin.*;
 
-typealias KList<T> = kotlin.collections.List<T>;
-typealias KString = kotlin.String;
+internal typealias KList<T> = kotlin.collections.List<T>;
+internal typealias KString = kotlin.String;
 
 // class for ASTs
 sealed class Tree(val loc: Location) {
@@ -29,28 +29,40 @@ sealed class Tree(val loc: Location) {
 	class List(l: Location, val list: KList<Tree>) : Tree(l);
 	class Declare(l: Location, val name: String, val value: Tree) : Tree(l);
 	class Set(l: Location, val name: String, val value: Tree) : Tree(l);
-
-	override fun toString() = when(this) {
-		is Event -> "event '$name' { ${children.joinToString(" ")} }"
-		is If -> "if { ${buildString { 
-			for(i in conds.indices) { 
-				append(conds[i]); 
-				append(" ");
-				append(actions[i]);
-			}
-			if(failure != null) {
-				append(" ");
-				append(failure);
-			}
-		}} } "
-		is Do -> "${children.joinToString(" ")}"
-		is Builtin -> "builtin '$name' { ${args.joinToString(" ")} }"
-		is Token -> token.toString();
-		is Declare -> "declare { $name $value }"
-		is Set -> "set { $name $value }"
-		is List -> "list { ${list.joinToString(" ")} }"
-		is For -> "for($varName in $list) { ${body.joinToString(" ")} }"
-	}
+	class Map(l: Location, val keys: KList<Tree>, val values: KList<Tree>) : Tree(l);
+	class Return(l: Location, val value: Tree) : Tree(l);
+	class While(l: Location, val cond: Tree, val body: KList<Tree>) : Tree(l);
+	
+	// this isn't used anywhere, so I've decided to remove for now (so I don't have to bother updating it again)
+	// override fun toString() = when(this) {
+	// 	is Event -> "event '$name' { ${children.joinToString(" ")} }"
+	// 	is If -> "if { ${buildString { 
+	// 		for(i in conds.indices) { 
+	// 			append(conds[i]); 
+	// 			append(" ");
+	// 			append(actions[i]);
+	// 		}
+	// 		if(failure != null) {
+	// 			append(" ");
+	// 			append(failure);
+	// 		}
+	// 	}} } "
+	// 	is Do -> "${children.joinToString(" ")}"
+	// 	is Builtin -> "builtin '$name' { ${args.joinToString(" ")} }"
+	// 	is Token -> token.toString();
+	// 	is Declare -> "declare { $name $value }"
+	// 	is Set -> "set { $name $value }"
+	// 	is List -> "list { ${list.joinToString(" ")} }"
+	// 	is For -> "for($varName in $list) { ${body.joinToString(" ")} }"
+	// 	is Map -> "map { ${buildString { 
+	// 		for(i in keys.indices) { 
+	// 			append(keys[i]); 
+	// 			append(" ");
+	// 			append(values[i]);
+	// 		}
+	// 	}} } "
+	// 	is Return -> "return $value"
+	// }
 
 	fun name() = when(this) {
 		is Do -> "do"
@@ -62,6 +74,9 @@ sealed class Tree(val loc: Location) {
 		is Set -> "set"
 		is List -> "list"
 		is For -> "for"
+		is Map -> "map"
+		is Return -> "return"
+		is While -> "while"
 	}
 }
 
@@ -81,8 +96,15 @@ sealed class Token(val loc: Location) {
 	class Parameter(l: Location, val name: KString): Token(l);
 	class Item(l: Location, val item: ItemStack): Token(l)
 	class List(l: Location): Token(l);
+	class Map(l: Location) : Token(l);
 	class Declare(l: Location, val name: KString): Token(l);
 	class Set(l: Location, val name: KString): Token(l);
+	class Unit(l: Location) : Token(l)
+	class Return(l: Location) : Token(l)
+	class Loc(l: Location, val location: Location) : Token(l);
+	class While(l: Location) : Token(l);
+	class Break(l: Location) : Token(l);
+	class Continue(l: Location) : Token(l);
 
 	override fun toString(): kotlin.String = when(this) {
 		is If -> "if"
@@ -101,6 +123,13 @@ sealed class Token(val loc: Location) {
 		is Set -> "set '$name'"
 		is List -> "list"
 		is For -> "for"
+		is Map -> "map"
+		is Unit -> "unit"
+		is Return -> "return"
+		is Loc -> "loc"
+		is While -> "while"
+		is Break -> "break"
+		is Continue -> "continue"
 	}
 
 	fun name(): kotlin.String = when(this) {
@@ -120,6 +149,13 @@ sealed class Token(val loc: Location) {
 		is Set -> "set"
 		is List -> "list"
 		is For -> "for"
+		is Map -> "map"
+		is Unit -> "unit"
+		is Return -> "return"
+		is Loc -> "loc"
+		is While -> "while"
+		is Break -> "break"
+		is Continue -> "continue"
 	}
 }
 
@@ -194,6 +230,10 @@ class Parser(var loc: Location) {
 					Material.OAK_PLANKS -> return Token.If(loc);
 					Material.MANGROVE_PLANKS -> return Token.Do(loc);
 					Material.MAGMA_BLOCK -> return Token.For(loc);
+					Material.NETHER_WART_BLOCK -> return Token.While(loc);
+					Material.COAL_BLOCK -> return Token.Return(loc);
+					Material.CHISELED_STONE_BRICKS -> return Token.Break(loc);
+					Material.CHISELED_QUARTZ_BLOCK -> return Token.Continue(loc);
 					Material.OBSIDIAN -> return Token.Variable(loc, readSign());
 					Material.WHITE_WOOL -> return Token.String(loc, buildString {
 						while(true) {
@@ -206,7 +246,7 @@ class Parser(var loc: Location) {
 					});
 					Material.LIME_TERRACOTTA -> return Token.Bool(loc, true);
 					Material.RED_TERRACOTTA -> return Token.Bool(loc, false);
-					Material.TARGET -> {
+					Material.WAXED_COPPER_BLOCK -> {
 						val n = readSign().toDoubleOrNull();
 						if(n == null)
 							throw ParseException(loc, "Invalid number.");
@@ -223,7 +263,21 @@ class Parser(var loc: Location) {
 						}
 						return next();
 					}
+					Material.TARGET -> {
+						try {
+							val s = readSign().split(" ").map { it.toDouble() };
+							if(s.size == 3)
+								return Token.Loc(loc, Location(loc.world, s[0], s[1], s[2]));
+							if(s.size == 5)
+								return Token.Loc(loc, Location(loc.world, s[0], s[1], s[2], s[3].toFloat(), s[4].toFloat()));
+							throw ExecutionException(loc, "Invalid location.");
+						} catch(e: NumberFormatException) {
+							throw ExecutionException(loc, "Invalid location.");
+						}
+					}
 					Material.END_STONE_BRICKS -> return Token.List(loc)
+					Material.MUD_BRICKS -> return Token.Map(loc)
+					Material.NETHERITE_BLOCK -> return Token.Unit(loc)
 					Material.CRIMSON_HYPHAE -> return Token.Declare(loc, readSign())
 					Material.WARPED_HYPHAE -> return Token.Set(loc, readSign())
 					else -> throw ParseException(loc, "Unknown block type: ${b!!.type.toString()}")
@@ -315,7 +369,33 @@ class Parser(var loc: Location) {
 					throwEOF();
 				return Tree.For(tk.loc, idx.name, l, block());
 			}
+			is Token.While -> {
+				var cond = nextTree();
+				if(cond == null)
+					throwEOF();
+				return Tree.While(tk.loc, cond, block());
+			}
+			is Token.Return -> {
+				var n = nextTree();
+				if(n == null)
+					throwEOF();
+				return Tree.Return(tk.loc, n);
+			}
 			is Token.List -> return Tree.List(tk.loc, block())
+			is Token.Map -> {
+				val b = block();
+				var keys = mutableListOf<Tree>();
+				var values = mutableListOf<Tree>();
+				if(b.size == 0)
+					return Tree.Map(loc, keys, values);
+				if(b.size%2 != 0)
+					throw ParseException(tk.loc, "Maps take an even number of elements to initialize.");
+				for(i in 0..(b.size/2-1)) {
+					keys.add(b[i*2]);
+					values.add(b[i*2+1]);
+				}
+				return Tree.Map(loc, keys, values);
+			}
 			is Token.Declare -> {
 				var n = nextTree();
 				if(n == null)

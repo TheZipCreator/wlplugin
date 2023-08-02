@@ -39,9 +39,9 @@ public class ChatListener implements Listener {
 	}
 
 	@EventHandler void onPlayerChat(AsyncPlayerChatEvent e) {
-		// TODO: maybe change this to modifying e.getRecipients()
 		if(e.isCancelled())
 			return;
+		// TODO: maybe change this to modifying e.getRecipients()
 		e.setCancelled(true);
 		PlayerData pd = Data.getPlayerData(e.getPlayer());
 		sendChat(e.getPlayer(), pd.channel, e.getMessage(), pd);

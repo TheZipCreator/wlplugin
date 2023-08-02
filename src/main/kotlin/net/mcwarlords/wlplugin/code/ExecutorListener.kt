@@ -23,4 +23,16 @@ object ExecutorListener : Listener {
 			else -> {}
 		}
 	}
+	@EventHandler(priority = EventPriority.LOW) fun onPlayerChat(e: AsyncPlayerChatEvent) {
+		var msg = e.message;
+		if(!msg.startsWith("%"))
+			return;
+		msg = msg.substring(1);
+		val args = msg.split(" ");
+		if(args.size == 0)
+			return;
+		val player = e.player;
+		e.setCancelled(true);
+		runTask { CCommandEvent(player, args[0], args.subList(1, args.size)).execute() }
+	}
 }

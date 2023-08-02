@@ -134,100 +134,78 @@ object CodeListener : Listener {
 						add();
 					});
 				}
-				when(findType(item)) {
+				val codeItem = findType(item);
+				if(codeItem == null)
+					return;
+				block.type = item.type;
+				when(codeItem) {
 					CodeItem.LBRACK -> {
-						block.type = Material.PISTON;
 						var bd = block.blockData as Piston;
 						bd.facing = BlockFace.NORTH;
 						block.blockData = bd;
 					}
 					CodeItem.RBRACK -> {
-						block.type = Material.PISTON;
 						var bd = block.blockData as Piston;
 						bd.facing = BlockFace.SOUTH;
 						block.blockData = bd;
 					}
 					CodeItem.EVENT -> {
-						block.type = Material.DIAMOND_BLOCK;
 						makeInputSign("event");
 					}
 					CodeItem.BUILTIN -> {
-						block.type = Material.FURNACE;
 						var bd = block.blockData as Directional;
 						bd.facing = BlockFace.EAST;
 						block.blockData = bd;
 						makeInputSign("builtin");
 					}
-					CodeItem.IF -> {
-						block.type = Material.OAK_PLANKS
-						makeSign(block, "&lIF");
-					}
-					CodeItem.DO -> {
-						block.type = Material.MANGROVE_PLANKS;
-						makeSign(block, "&lDO");
-					}
-					CodeItem.FOR -> {
-						block.type = Material.MAGMA_BLOCK;
-						makeSign(block, "&lFOR");
-					}
-					CodeItem.VARIABLE -> {
-						block.type = Material.OBSIDIAN;
-						makeInputSign("variable");
-					}
-					CodeItem.STRING -> {
-						block.type = Material.WHITE_WOOL;
-						makeLongInputSign("string", Material.WHITE_WOOL);
-					}
-					CodeItem.NUMBER -> {
-						block.type = Material.TARGET;
-						makeInputSign("number", { it.toDoubleOrNull() != null });
-					}
-					CodeItem.TRUE -> {
-						block.type = Material.LIME_TERRACOTTA;
-						makeSign(block, "&lBOOL", "true");
-					}
-					CodeItem.FALSE -> {
-						block.type = Material.RED_TERRACOTTA;
-						makeSign(block, "&lBOOL", "false");
-					}
-					CodeItem.PARAMETER -> {
-						block.type = Material.PRISMARINE_BRICKS;
-						makeInputSign("parameter");
-					}
+					CodeItem.IF -> makeSign(block, "&lIF");
+					CodeItem.DO -> makeSign(block, "&lDO");
+					CodeItem.FOR -> makeSign(block, "&lFOR");
+					CodeItem.WHILE -> makeSign(block, "&lWHILE");
+					CodeItem.RETURN -> makeSign(block, "&lRETURN");
+					CodeItem.BREAK -> makeSign(block, "&lBREAK");
+					CodeItem.CONTINUE -> makeSign(block, "&lCONTINUE");
+					CodeItem.VARIABLE -> makeInputSign("variable");
+					CodeItem.STRING -> makeLongInputSign("string", item.type);
+					CodeItem.NUMBER -> makeInputSign("number", { it.toDoubleOrNull() != null });
+					CodeItem.TRUE -> makeSign(block, "&lBOOL", "true");
+					CodeItem.FALSE -> makeSign(block, "&lBOOL", "false");
+					CodeItem.PARAMETER -> makeInputSign("parameter");
 					CodeItem.ITEM -> {
-						block.type = Material.BARREL;
 						var bd = block.blockData as Directional;
 						bd.facing = BlockFace.EAST;
 						block.blockData = bd;
 						makeSign(block, "&lITEM");
 					}
-					CodeItem.LIST -> {
-						block.type = Material.END_STONE_BRICKS;
-						makeSign(block, "&lLIST");
-					}
+					CodeItem.LIST -> makeSign(block, "&lLIST");
+					CodeItem.MAP -> makeSign(block, "&lMAP");
+					CodeItem.UNIT -> makeSign(block, "&lUNIT");
+					CodeItem.LOCATION -> makeInputSign("location", fn@ {
+						var s = it.split(" ").map { it.toDoubleOrNull() }
+						if(s.size != 3 && s.size != 5)
+							return@fn false;
+						return@fn s.all { it != null };
+					});
 					CodeItem.DECLARE -> {
-						block.type = Material.CRIMSON_HYPHAE;
 						makeInputSign("declare", displayName="variable");
 					}
 					CodeItem.SET -> {
-						block.type = Material.WARPED_HYPHAE;
 						makeInputSign("set", displayName="variable");
 					}
 					CodeItem.COMMENT -> {
-						block.type = Material.REDSTONE_LAMP;
 						makeLongInputSign("comment", Material.REDSTONE_LAMP);
 					}
-					null -> { e.setCancelled(false); return; }
 				}
 			}
 			Action.LEFT_CLICK_BLOCK -> {
-				e.setCancelled(true);
 				if(block.getRelative(BlockFace.WEST).type == Material.BLACK_CONCRETE) {
+					e.setCancelled(true);
 					block.type = Material.BLACK_STAINED_GLASS;
 					block.getRelative(BlockFace.EAST).type = Material.AIR;
 					return;
 				}
 				if(block.getRelative(BlockFace.WEST, 2).type == Material.BLACK_CONCRETE && block.type == Material.OAK_WALL_SIGN) {
+					e.setCancelled(true);
 					block.type = Material.AIR;
 					block.getRelative(BlockFace.WEST).type = Material.BLACK_STAINED_GLASS;
 				}
