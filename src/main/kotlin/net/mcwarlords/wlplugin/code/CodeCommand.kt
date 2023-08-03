@@ -15,6 +15,7 @@ object CodeCommand : CommandExecutor {
     p.sendMessage(Utils.escapeText("&_p/wlcode b | build <name> &_s- &_dBuilds a unit. Should be called every time it is modified."));
 		p.sendMessage(Utils.escapeText("&_p/wlcode d | delete <name> &_s- &_dDeletes a unit."));
 		p.sendMessage(Utils.escapeText("&_p/wlcode s | subscribe <name> &_s- &_dSubscribes or unsubscribes to a unit."));
+		p.sendMessage(Utils.escapeText("&_p/wlcode sl | subscribelist &_s- &_dGets a list of all units you're currently subscribed to."));
 		p.sendMessage(Utils.escapeText("&_p/wlcode l | log <name> &_s- &_dPrints out the debug logs for a unit."));
 		p.sendMessage(Utils.escapeText("&_p/wlcode cc | cacheclear <name> &_s- &_dClears the cache of a unit and builds it without loading cache."));
 		p.sendMessage(Utils.escapeText("&_p/wlcode cv | cacheview <name> &_s- &_dViews the cache of a unit."));
@@ -78,7 +79,7 @@ object CodeCommand : CommandExecutor {
 				var w = l.world!!;
 				for(y in -64..319) {
 					for(x in 0..8) {
-						for(z in 0..32) {
+						for(z in 0..CodeUnit.WIDTH) {
 							var b = w.getBlockAt((l.x+x).toInt(), y, (l.z-z).toInt());
 							b.type = when(x) {
 								0 -> Material.BLACK_CONCRETE
@@ -142,6 +143,13 @@ object CodeCommand : CommandExecutor {
 				var obj = Data.cacheObject(cu.name);
 				obj.put("__type", "map"); // make it readable by Value.deserialize()
 				p.sendMessage(Value.deserialize(obj).toString());
+			}
+			"sl", "subscribelist" -> run {
+				if(args.size != 1) {
+					p.sendMessage(invalidArguments);
+					return@run;
+				}
+				p.sendMessage(Utils.escapeText("&_dYour currently subscribed units are: ${pd.subscribed.map { "&_e$it" }.joinToString("&_d, ")}&_d."));
 			}
 			else -> p.sendMessage(Utils.escapeText("&_p* &_dInvalid subcommand."))
 		}

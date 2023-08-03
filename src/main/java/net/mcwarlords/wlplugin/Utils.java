@@ -32,7 +32,10 @@ public class Utils {
 				e.setCancelled(true);
 				Bukkit.getScheduler().runTask(WlPlugin.instance, () -> {
 					// might remove the escape text later, idk
-					pd.inputCB.accept(Utils.escapeText(e.getMessage()));
+					String msg = e.getMessage();
+					if(msg.length() >= 1 && msg.charAt(0) == '\\')
+						msg = msg.substring(1);
+					pd.inputCB.accept(Utils.escapeText(msg));
 					pd.inputCB = null;
 				});
 			}

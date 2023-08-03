@@ -32,7 +32,9 @@ sealed class Tree(val loc: Location) {
 	class Map(l: Location, val keys: KList<Tree>, val values: KList<Tree>) : Tree(l);
 	class Return(l: Location, val value: Tree) : Tree(l);
 	class While(l: Location, val cond: Tree, val body: KList<Tree>) : Tree(l);
-	
+	class Function(l: Location, val name: String, val fn: CFunction) : Tree(l)
+	class Call(l: Location, val name: KString, val args: KList<Tree>) : Tree(l);
+
 	// this isn't used anywhere, so I've decided to remove for now (so I don't have to bother updating it again)
 	// override fun toString() = when(this) {
 	// 	is Event -> "event '$name' { ${children.joinToString(" ")} }"
@@ -77,6 +79,8 @@ sealed class Tree(val loc: Location) {
 		is Map -> "map"
 		is Return -> "return"
 		is While -> "while"
+		is Function -> "function"
+		is Call -> "call"
 	}
 }
 
@@ -105,6 +109,8 @@ sealed class Token(val loc: Location) {
 	class While(l: Location) : Token(l);
 	class Break(l: Location) : Token(l);
 	class Continue(l: Location) : Token(l);
+	class Function(l: Location, val name: KString) : Token(l);
+	class Call(l: Location, val name: KString) : Token(l);
 
 	override fun toString(): kotlin.String = when(this) {
 		is If -> "if"
@@ -130,6 +136,8 @@ sealed class Token(val loc: Location) {
 		is While -> "while"
 		is Break -> "break"
 		is Continue -> "continue"
+		is Function -> "function '$name'"
+		is Call -> "call '$name'"
 	}
 
 	fun name(): kotlin.String = when(this) {
@@ -156,6 +164,8 @@ sealed class Token(val loc: Location) {
 		is While -> "while"
 		is Break -> "break"
 		is Continue -> "continue"
+		is Function -> "function"
+		is Call -> "call"
 	}
 }
 
@@ -226,7 +236,9 @@ class Parser(var loc: Location) {
 							throw ParseException(loc, "Invalid event '$s'.");
 						return Token.Event(loc, s);
 					}
+					Material.LAPIS_BLOCK -> return Token.Function(loc, readSign());
 					Material.FURNACE -> return Token.Builtin(loc, readSign());
+					Material.LAPIS_ORE -> return Token.Call(loc, readSign())
 					Material.OAK_PLANKS -> return Token.If(loc);
 					Material.MANGROVE_PLANKS -> return Token.Do(loc);
 					Material.MAGMA_BLOCK -> return Token.For(loc);
@@ -328,7 +340,7 @@ class Parser(var loc: Location) {
 			// this should be safe - if we're not at top level another block should've been parsed
 			throwEOF();
 		}
-		if(topLevel && tk !is Token.Event && tk !is Token.Declare)
+		if(topLevel && tk !is Token.Event && tk !is Token.Declare && tk !is Token.Function)
 			throw ParseException(tk.loc, "Unexpected $tk at top-level.");
 		when(tk) {
 			is Token.Lbrack, is Token.Rbrack -> {
@@ -355,10 +367,24 @@ class Parser(var loc: Location) {
 				val b = block();
 				return Tree.Event(tk.loc, tk.name, b);
 			}
+			is Token.Function -> {
+				if(!topLevel)
+					throw ParseException(tk.loc, "Function can only be used at top-level.");
+				val args = mutableListOf<String>();
+				while(true) {
+					val tk = peek();
+					if(tk !is Token.Variable)
+						break;
+					next(); // consume
+					args.add(tk.name);
+				}
+				return Tree.Function(tk.loc, tk.name, CFunction(args, Tree.Do(tk.loc, block()))); 
+			}
 			is Token.Builtin -> {
 				val b = block();
 				return Tree.Builtin(tk.loc, tk.name, b);
 			}
+			is Token.Call -> return Tree.Call(tk.loc, tk.name, block());
 			is Token.Do -> return Tree.Do(tk.loc, block())
 			is Token.For -> {
 				var idx = next();

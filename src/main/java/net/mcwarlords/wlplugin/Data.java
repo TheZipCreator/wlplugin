@@ -146,6 +146,7 @@ public class Data {
 			WlPlugin.info("Error writing data:");
 			e.printStackTrace();
 		}
+		new CCacheEvent().execute();
 		WlPlugin.info("Data saved.");
 	}
 

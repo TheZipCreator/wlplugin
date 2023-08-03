@@ -50,13 +50,11 @@ object CodeListener : Listener {
 	}
 
 	@EventHandler fun onPlayerInteract(e: PlayerInteractEvent) {
-		if(e.isCancelled())
-			return;
 		var p = e.player;
 		var pd = Data.getPlayerData(p);
 		if(!pd.codeMode)
 			return;
-		var block = e.clickedBlock!!;
+		var block = e.clickedBlock;
 		when(e.action) {
 			Action.RIGHT_CLICK_AIR, Action.RIGHT_CLICK_BLOCK -> {
 				var item = e.item;
@@ -71,8 +69,102 @@ object CodeListener : Listener {
 					e.setCancelled(true);
 					return;
 				}
-				if(e.action == Action.RIGHT_CLICK_AIR)
+				if(block == null)
 					return;
+				if(item in editingItems) {
+					e.setCancelled(true);
+					fun edge(b: Block, dir: BlockFace): Block {
+						var bl = b;
+						var dist = 0;
+						while(true) {
+							if(dist >= CodeUnit.WIDTH)
+								break;
+							val rel = bl.getRelative(dir);
+							val sign = rel.getRelative(BlockFace.EAST);
+							if(rel.type == Material.AIR || (sign.type != Material.OAK_WALL_SIGN && sign.type != Material.AIR))
+								break;
+							bl = rel;
+							dist += 1;
+						}
+						return bl;
+					}
+					fun copy(dest: Block, src: Block) {
+						dest.blockData = src.blockData;
+						if(src.type == Material.OAK_WALL_SIGN) {
+							var srcState = src.state as Sign;
+							var destState = dest.state as Sign;
+							for(i in 0..3)
+								destState.setLine(i, srcState.getLine(i));
+							destState.update(true);
+						}
+					}
+					if(block.type == Material.OAK_WALL_SIGN)
+						block = block.getRelative(BlockFace.WEST);
+					if(block.getRelative(BlockFace.WEST).type != Material.BLACK_CONCRETE)
+						return;
+					when(item) {
+						editingItems[0] -> {
+							// add line
+							val left = edge(block, BlockFace.SOUTH).getRelative(BlockFace.DOWN);
+							val w = left.world;
+							for(y in -64..left.y-1) {
+								for(x in left.x..left.x+1) {
+									for(z in left.z downTo left.z-CodeUnit.WIDTH) {
+										copy(w.getBlockAt(x, y, z), w.getBlockAt(x, y+1, z));
+									}
+								}
+							}
+							for(z in left.z downTo left.z-CodeUnit.WIDTH) {
+								var b = w.getBlockAt(left.x, left.y, z);
+								b.type = Material.BLACK_STAINED_GLASS;
+								b.getRelative(BlockFace.EAST).type = Material.AIR;
+							}
+						}
+						editingItems[1] -> {
+							// remove line
+							val left = edge(block, BlockFace.SOUTH);
+							val w = left.world;
+							for(y in left.y downTo -64) {
+								for(x in left.x..left.x+1) {
+									for(z in left.z downTo left.z-CodeUnit.WIDTH) {
+										copy(w.getBlockAt(x, y, z), w.getBlockAt(x, y-1, z));
+									}
+								}
+							}
+							for(z in left.z downTo left.z-CodeUnit.WIDTH) {
+								var b = w.getBlockAt(left.x, -64, z);
+								b.type = Material.BLACK_STAINED_GLASS;
+								b.getRelative(BlockFace.EAST).type = Material.AIR;
+							}
+						}
+						editingItems[2] -> {
+							// add space
+							val right = edge(block, BlockFace.NORTH);
+							val w = right.world;
+							for(x in right.x..right.x+1) {
+								for(z in right.z..block.z) {
+									copy(w.getBlockAt(x, block.y, z), w.getBlockAt(x, block.y, z+1));
+								}
+							}
+							block.type = Material.BLACK_STAINED_GLASS;
+							block.getRelative(BlockFace.EAST).type = Material.AIR;
+						}
+						editingItems[3] -> {
+							// remove space
+							val right = edge(block, BlockFace.NORTH);
+							val w = right.world;
+							for(x in right.x..right.x+1) {
+								for(z in block.z downTo right.z) {
+									copy(w.getBlockAt(x, block.y, z), w.getBlockAt(x, block.y, z-1));
+								}
+							}
+							right.type = Material.BLACK_STAINED_GLASS;
+							right.getRelative(BlockFace.EAST).type = Material.AIR;
+						}
+						else -> {}
+					}
+					return;
+				}
 				if(block.type != Material.BLACK_STAINED_GLASS)
 					return;
 				e.setCancelled(true);
@@ -149,15 +241,15 @@ object CodeListener : Listener {
 						bd.facing = BlockFace.SOUTH;
 						block.blockData = bd;
 					}
-					CodeItem.EVENT -> {
-						makeInputSign("event");
-					}
+					CodeItem.EVENT -> makeInputSign("event")
+					CodeItem.FUNCTION -> makeInputSign("function")
 					CodeItem.BUILTIN -> {
 						var bd = block.blockData as Directional;
 						bd.facing = BlockFace.EAST;
 						block.blockData = bd;
 						makeInputSign("builtin");
 					}
+					CodeItem.CALL -> makeInputSign("call", displayName="function")
 					CodeItem.IF -> makeSign(block, "&lIF");
 					CodeItem.DO -> makeSign(block, "&lDO");
 					CodeItem.FOR -> makeSign(block, "&lFOR");
@@ -197,7 +289,17 @@ object CodeListener : Listener {
 					}
 				}
 			}
-			Action.LEFT_CLICK_BLOCK -> {
+			Action.LEFT_CLICK_BLOCK, Action.LEFT_CLICK_AIR -> {
+				val item = e.item;
+				if(item in editingItems) {
+					e.setCancelled(true);
+					val idx = editingItems.indexOf(item);
+					p.inventory.setItemInMainHand(editingItems[(idx+1)%editingItems.size]);
+					p.playSound(p.location, Sound.ENTITY_ITEM_PICKUP, 1f, 1f);
+					return;
+				}
+				if(block == null)
+					return;
 				if(block.getRelative(BlockFace.WEST).type == Material.BLACK_CONCRETE) {
 					e.setCancelled(true);
 					block.type = Material.BLACK_STAINED_GLASS;

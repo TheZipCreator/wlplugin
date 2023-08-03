@@ -4,7 +4,9 @@ import org.bukkit.entity.*;
 import org.bukkit.*;
 import org.bukkit.inventory.*;
 import org.bukkit.projectiles.*;
-import kotlin.math.pow;
+import org.bukkit.potion.*
+import org.bukkit.util.*;
+import kotlin.math.*;
 import kotlin.random.*;
 import java.util.concurrent.atomic.*;
 
@@ -91,10 +93,10 @@ private fun equality(name: String, op: (a: Value, b: Value) -> Boolean): Builtin
 
 // idt there's a way to make a template for these
 
-private fun getPlayer(loc: Location, v: Value): Player {
-	if(v !is Value.Entity || v.entity !is Player)
+private fun Value.getPlayer(loc: Location): Player {
+	if(this !is Value.Entity || entity !is Player)
 		throw ExecutionException(loc, "Player expected.");
-	return v.entity;
+	return entity;
 }
 
 private fun Value.getNum(loc: Location): Double {
@@ -128,6 +130,12 @@ private fun Value.getLocation(loc: Location): Location {
 	return this.loc;
 }
 
+private fun Value.getItem(loc: Location): ItemStack {
+	if(this !is Value.Item)
+		throw ExecutionException(loc, "Item expected, got ${typeName()}.");
+	return this.item;
+}
+
 private fun <T> List<T>.boundsCheck(loc: Location, i: Int) {
 	if(i < 0 || i >= size)
 		throw ExecutionException(loc, "Index $i is out of range for list of size $size");
@@ -152,21 +160,26 @@ private fun getRange(loc: Location, args: List<Value>, name: String): Pair<Int, 
 	return Pair(min, max);
 }
 
-private fun entityTypeFromValue(loc: Location, v: Value): EntityType {
-	val name = v.toString();
+private inline fun <reified T : Enum<T>> Value.toEnum(loc: Location): T {
+	val name = toString();
 	try {
-		return EntityType.valueOf(name.uppercase().replace('-', '_'));
+		return java.lang.Enum.valueOf(T::class.java, name.uppercase().replace('-', '_'));
 	} catch(e: IllegalArgumentException) {
-		throw ExecutionException(loc, "Invalid entity type '$name'");
+		throw ExecutionException(loc, "Invalid ${T::class.simpleName} '$name'");
 	}
 }
+
+private fun potionTypeFromValue(loc: Location, v: Value): PotionEffectType =
+	PotionEffectType.getByName(v.toString().uppercase().replace('-', '_')) ?: throw ExecutionException(loc, "Invalid potion effect type '$v'");
+
+
 
 internal val builtins = mapOf<String, Builtin>(
 	// player actions
 	// sends a message to a player
 	"send-message" to fn@ { _, loc, args ->
 		argsAtLeast(loc, args, "send-message", 1);
-		val player = getPlayer(loc, args[0]);
+		val player = args[0].getPlayer(loc);
 		var msg = buildString {
 			for(v in args.subList(1, args.size))
 				append("$v");
@@ -177,7 +190,7 @@ internal val builtins = mapOf<String, Builtin>(
 	// gives an item to a player
 	"give-item" to fn@ { _, loc, args ->
 		argsAtLeast(loc, args, "give-item", 1);
-		val player = getPlayer(loc, args[0]);
+		val player = args[0].getPlayer(loc);
 		var items = mutableListOf<ItemStack>();
 		for(v in args.subList(1, args.size)) {
 			if(v !is Value.Item)
@@ -195,12 +208,12 @@ internal val builtins = mapOf<String, Builtin>(
 	// gets the item a player is holding in their main hand
 	"main-hand-item" to fn@ { _, loc, args ->
 		argsEqual(loc, args, "held-item", 1);
-		Value.Item(getPlayer(loc, args[0]).inventory.itemInMainHand);
+		Value.Item(args[0].getPlayer(loc).inventory.itemInMainHand);
 	},
 	// gets the item a player is holding in their off hand
 	"off-hand-item" to fn@ { _, loc, args ->
 		argsEqual(loc, args, "held-item", 1);
-		Value.Item(getPlayer(loc, args[0]).inventory.itemInOffHand);
+		Value.Item(args[0].getPlayer(loc).inventory.itemInOffHand);
 	},
 	// gets a player by a name.
 	"player-by-name" to fn@ { _, loc, args ->
@@ -249,6 +262,19 @@ internal val builtins = mapOf<String, Builtin>(
 			throw ExecutionException(loc, "Could not get name of player with UUID '$uuid'");
 		Value.String(name);
 	},
+	"set-gamemode" to fn@ { _, loc, args ->
+		argsEqual(loc, args, "gamemode", 2);
+		val player = args[0].getPlayer(loc);
+		val gameMode = args[1].toEnum<GameMode>(loc);
+		runTask { player.gameMode = gameMode }
+		Value.Unit
+	},
+	"subscribed?" to fn@ { exec, loc, args ->
+		argsEqual(loc, args, "subscribed?", 1)
+		val player = args[0].getPlayer(loc);
+		val pd = Data.getPlayerData(player);
+		Value.Bool(exec.ctx.unit.name in pd.subscribed);
+	},
 	// entity actions
 	// teleports an entity
 	"teleport" to { _, loc, args ->
@@ -259,7 +285,7 @@ internal val builtins = mapOf<String, Builtin>(
 	// spawns an entity. returns the entity spawned.
 	"spawn" to { _, loc, args ->
 		argsEqual(loc, args, "spawn", 2);
-		val type = entityTypeFromValue(loc, args[0]);
+		val type = args[0].toEnum<EntityType>(loc);
 		val l = args[1].getLocation(loc);
 		var e: AtomicReference<Entity?> = AtomicReference(null);
 		runTask {
@@ -274,11 +300,10 @@ internal val builtins = mapOf<String, Builtin>(
 		val source = args[0].getEntity(loc);
 		if(source !is ProjectileSource)
 			throw ExecutionException(loc, "Entity is not a projectile source.");
-		val typeName = args[1];
-		val type = entityTypeFromValue(loc, typeName);
+		val type = args[1].toEnum<EntityType>(loc);
 		val clazz = type.getEntityClass();
 		if(!Projectile::class.java.isAssignableFrom(type.entityClass!!))
-			throw ExecutionException(loc, "Entity type '$typeName' is not a projectile.");
+			throw ExecutionException(loc, "Entity type '${args[1]}' is not a projectile.");
 		var e: AtomicReference<Entity?> = AtomicReference(null);
 		runTask {
 			e.`set`(source.launchProjectile(clazz as Class<Projectile>)); // honestly surprised this cast even works
@@ -286,10 +311,47 @@ internal val builtins = mapOf<String, Builtin>(
 		while(e.`get`() == null);
 		Value.Entity(e.`get`()!!);
 	},
+	// damages an entity
+	"damage" to { _, loc, args ->
+		argsEqual(loc, args, "damage", 2);
+		val entity = args[0].getEntity(loc);
+		if(entity !is Damageable)
+			throw ExecutionException(loc, "Entity is not damageable.");
+		val amt = args[1].getNum(loc);
+		runTask { entity.damage(amt); }
+		Value.Unit
+	},
+	"effect" to { _, loc, args ->
+		argsBetween(loc, args, "effect", 4, 7);
+		val entity = args[0].getEntity(loc);
+		if(entity !is LivingEntity)
+			throw ExecutionException(loc, "Can not apply potion effect to entity.");
+		val type = potionTypeFromValue(loc, args[0]);
+		val duration = args[2].getNum(loc).toInt();
+		val amplifier = args[3].getNum(loc).toInt();
+		val effect = when(args.size) {
+			4 -> PotionEffect(type, duration, amplifier)
+			5 -> PotionEffect(type, duration, amplifier, args[4].getBool(loc))
+			6 -> PotionEffect(type, duration, amplifier, args[4].getBool(loc), args[5].getBool(loc))
+			7 -> PotionEffect(type, duration, amplifier, args[4].getBool(loc), args[5].getBool(loc), args[6].getBool(loc))
+			else -> throw ExecutionException(loc, "This should not appear.")
+		}
+		runTask { entity.addPotionEffect(effect); }
+		Value.Unit
+	},
 	// gets the location of an entity
 	"location-of" to { _, loc, args ->
 		argsEqual(loc, args, "location-of", 1);
 		Value.Loc(args[0].getEntity(loc).location)
+	},
+	"kill" to { _, loc, args ->
+		argsEqual(loc, args, "kill", 1);
+		val entity = args[0].getEntity(loc);
+		if(entity is Damageable)
+			runTask { entity.setHealth(0.0) }
+		else
+			runTask { entity.remove() }
+		Value.Unit
 	},
 	// operators
 	"+" to operation("+", {a, b -> a+b}),
@@ -324,13 +386,20 @@ internal val builtins = mapOf<String, Builtin>(
 	"location-shift" to { _, loc, args ->
 		argsOneOf(loc, args, "location-shift", 4, 6);
 		var l = args[0].getLocation(loc).clone();
-		var s = args.subList(1, args.size).map { it.getNum(loc) }.toMutableList();
+		var s = args.subList(1, args.size).map { it.getNum(loc) };
 		l.add(s[0], s[1], s[2]);
 		if(s.size == 5) {
 			l.yaw += s[4].toFloat();
 			l.pitch += s[5].toFloat();
 		}
 		Value.Loc(l)
+	},
+	"location-shift-forwards" to { _, loc, args ->
+		argsEqual(loc, args, "location-shift-forwards", 2);
+		var l = args[0].getLocation(loc).clone();
+		val amt = args[1].getNum(loc);
+		l.add(l.getDirection().multiply(amt));
+		Value.Loc(l);
 	},
 	// list functions
 	// generates a range from a (inclusive) to b (exclusive)
@@ -430,6 +499,24 @@ internal val builtins = mapOf<String, Builtin>(
 			else -> Value.Unit
 		}
 	},
+	// world
+	"set-block" to { _, loc, args ->
+		argsEqual(loc, args, "set-block", 2);
+		val l = args[0].getLocation(loc);
+		val type = args[1].getItem(loc).type;
+		if(!type.isBlock())
+			throw ExecutionException(loc, "Item type ${type.lispCase()} is not a block.");
+		runTask { l.world?.getBlockAt(l)?.type = type }
+		Value.Unit
+	},
+	"get-block" to { _, loc, args ->
+		argsEqual(loc, args, "get-block", 1);
+		val l = args[0].getLocation(loc);
+		var mat: AtomicReference<Material?> = AtomicReference(null);
+		runTask { mat.`set`(l.world?.getBlockAt(l)?.type ?: Material.AIR) }
+		while(mat.`get`() == null);
+		Value.Item(ItemStack(mat.`get`()!!, 1));
+	},
 	// misc
 	// logs to the unit's log
 	"log" to { exec, _, args ->
@@ -464,5 +551,30 @@ internal val builtins = mapOf<String, Builtin>(
 		argsEqual(loc, args, "cache-get", 1);
 		val name = args[0].toString();
 		Data.cacheGet(exec.ctx.unit.name, name) ?: Value.Unit
+	},
+	"spawn-particle" to { _, loc, args ->
+		argsEqual(loc, args, "spawn-particle", 3);
+		val type = args[0].toEnum<Particle>(loc);
+		val l = args[1].getLocation(loc);
+		val count = args[2].getNum(loc).toInt();
+		runTask { loc.world?.spawnParticle(type, l, count, 0.0, 0.0, 0.0, 0.0) }
+		Value.Unit
+	},
+	"online-players" to { _, _, _ ->
+		Value.List(Bukkit.getServer().onlinePlayers.map { Value.Entity(it) }.toMutableList())
+	},
+	"play-sound" to { _, loc, args ->
+		argsBetween(loc, args, "play-sound", 4, 5);
+		val sound = args[0].toEnum<Sound>(loc);
+		val l = args[1].getLocation(loc);
+		val volume = args[2].getNum(loc).toFloat();
+		val pitch = args[3].getNum(loc).toFloat();
+		if(args.size == 4)
+			runTask { l.world?.playSound(l, sound, volume, pitch) }
+		else {
+			val player = args[4].getPlayer(loc);
+			runTask { player.playSound(l, sound, volume, pitch) }
+		}
+		Value.Unit
 	}
 );

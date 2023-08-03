@@ -36,12 +36,9 @@ class CodeModule : Module {
 		}
 		Bukkit.getScheduler().runTaskTimer(WlPlugin.instance, Runnable {
 			for(p in Bukkit.getServer().onlinePlayers) {
-				CLoopEvent(p).execute();
+				CLoopEvent().execute();
 			}
 		}, 20, 1);
-		Bukkit.getScheduler().runTaskTimer(WlPlugin.instance, Runnable {
-			CCacheEvent().execute();
-		}, 0, 36000);
 		WlPlugin.info("wlcode enabled");
 	}
 
@@ -68,7 +65,9 @@ enum class CodeItem(val item: ItemStack) {
 	LBRACK(mkItem(Material.PISTON, "&6[", "&7Opens a block.")),
 	RBRACK(mkItem(Material.PISTON, "&6]", "&7Closes a block.")),
 	EVENT(mkItem(Material.DIAMOND_BLOCK, "&bEvent", "&7An event triggered by a player.")),
+	FUNCTION(mkItem(Material.LAPIS_BLOCK, "&bFunction", "&7A reusable bit of code that", "&7can be called from anywhere.")),
 	BUILTIN(mkItem(Material.FURNACE, "&cBuiltin", "&7A built-in function.")),
+	CALL(mkItem(Material.LAPIS_ORE, "&cCall", "&7Calls a function.")),
 	IF(mkItem(Material.OAK_PLANKS, "&6If", "&7Checks whether a condition is true.")),
 	DO(mkItem(Material.MANGROVE_PLANKS, "&6Do", "&7Does multiple commands at once.")),
 	FOR(mkItem(Material.MAGMA_BLOCK, "&6For", "&7Iterates over a collection.")),
@@ -93,6 +92,12 @@ enum class CodeItem(val item: ItemStack) {
 }
 
 internal val blocksItem = mkItem(Material.DIAMOND, "&bCode Blocks");
+internal val editingItems = listOf<ItemStack>(
+	mkItem(Material.LIME_CANDLE, "&aAdd line", "&7Adds a line after another line.", "&7Left click to change."),
+	mkItem(Material.RED_CANDLE, "&cRemove line", "&7Removes a line.", "&7Left click to change."),
+	mkItem(Material.LIME_DYE, "&aAdd space", "&7Adds a space.", "&7Left click to change."),
+	mkItem(Material.RED_DYE, "&cRemove space", "&7Removes a space.", "&7Left click to change.")
+);
 
 internal fun toggleCodeMode(p: Player) {
 	var pd = Data.getPlayerData(p);
@@ -101,6 +106,7 @@ internal fun toggleCodeMode(p: Player) {
 		pd.prevInv = p.inventory.contents;
 		p.inventory.clear();
 		p.inventory.addItem(blocksItem);
+		p.inventory.addItem(editingItems[0]);
 		p.sendMessage(Utils.escapeText("&_p* &_dEntered code mode."));
 	} else {
 		p.inventory.contents = pd.prevInv;

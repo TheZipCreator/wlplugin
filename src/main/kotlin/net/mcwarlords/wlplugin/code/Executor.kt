@@ -11,6 +11,8 @@ import org.bukkit.inventory.*;
 
 import org.json.simple.*;
 
+import kotlin.reflect.*;
+
 import net.mcwarlords.wlplugin.*;
 
 class SerializationException(msg: String) : Exception(msg);
@@ -154,12 +156,27 @@ sealed class Value private constructor() {
 		}
 	}
 }
+// represents a function
+class CFunction(val args: List<String>, val body: Tree) {
+	fun call(ctx: ExecutorContext, params: List<Value>): Value {
+		var vars = mutableMapOf<String, Var>();
+		for(i in args.indices) {
+			vars[args[i]] = Var(1u, if(i < args.size) params[i] else Value.Unit);
+		}
+		var exec = Executor(1u, ctx, vars);
+		try {
+			return exec.eval(body);
+		} catch(e: Return) {
+			return e.value;
+		}
+	}
+}
 
 // context for interpreting - shared between an executor and all its children
 class ExecutorContext(val unit: CodeUnit, val event: CEvent?, var stopped: Boolean);
 
 class ExecutionException(loc: Location?, msg: String) : CodeException(loc, msg);
-class Return(loc: Location, value: Value) : CodeException(loc, "Unexpected return.");
+class Return(loc: Location, val value: Value) : CodeException(loc, "Unexpected return.");
 class Break(loc: Location) : CodeException(loc, "Unexpected break.");
 class Continue(loc: Location) : CodeException(loc, "Unexpected continue.");
 
@@ -182,6 +199,7 @@ class Executor(val scope: UInt, val ctx: ExecutorContext, table: MutableMap<Stri
 	fun eval(tree: Tree): Value {
 		when(tree) {
 			is Tree.Event -> return evalChildren(tree.children)
+			is Tree.Function -> throw ExecutionException(tree.loc, "Unexpected function")
 			is Tree.Do -> return sub().evalChildren(tree.children)
 			is Tree.If -> {
 				for(i in tree.conds.indices) {
@@ -193,10 +211,12 @@ class Executor(val scope: UInt, val ctx: ExecutorContext, table: MutableMap<Stri
 			is Tree.Builtin -> {
 				if(!builtins.containsKey(tree.name))
 					throw ExecutionException(tree.loc, "Invalid builtin ${tree.name}.");
-				var args = mutableListOf<Value>();
-				for(t in tree.args)
-					args.add(eval(t));
-				return builtins[tree.name]!!(this, tree.loc, args);
+				return builtins[tree.name]!!(this, tree.loc, tree.args.map { eval(it) });
+			}
+			is Tree.Call -> {
+				if(!ctx.unit.functions.containsKey(tree.name))
+					throw ExecutionException(tree.loc, "Unknown function ${tree.name}.");
+				return ctx.unit.functions[tree.name]!!.call(ctx, tree.args.map { eval(it) });
 			}
 			is Tree.For -> {
 				var list = eval(tree.list);
@@ -256,6 +276,11 @@ class Executor(val scope: UInt, val ctx: ExecutorContext, table: MutableMap<Stri
 							if(ctx.event !is CCommandEvent)
 								throw ExecutionException(tk.loc, "Parameter 'args' is only valid for the command event.");
 							return Value.List(ctx.event.args.map { Value.String(it) }.toMutableList());
+						}
+						"location" -> {
+							if(ctx.event !is CLocationEvent)
+								throw ExecutionException(tk.loc, "Paramater 'location' is only valid for location events.");
+							return Value.Loc(ctx.event.location);
 						}
 						else -> throw ExecutionException(tk.loc, "Invalid parameter ${tk.name}")
 					}

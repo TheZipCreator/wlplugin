@@ -34,6 +34,8 @@ class CCacheEvent() : CSimpleEvent("cache") {
 			u.handleEvent(this, true);
 	}
 }
+// ran every tick
+class CLoopEvent() : CSimpleEvent("loop")
 
 // a cancellable event
 interface CCancellable {
@@ -66,12 +68,17 @@ class CQuitEvent(private val impl: PlayerQuitEvent) : CPlayerEvent {
 	override val player = impl.player;
 }
 
+interface CLocationEvent : CEvent {
+	val location: Location;
+}
+
 // interface for a click event
-abstract class CClickEvent(private val impl: PlayerInteractEvent, override val name: String) : CPlayerEvent, CCancellable {
+abstract class CClickEvent(private val impl: PlayerInteractEvent, override val name: String) : CPlayerEvent, CLocationEvent, CCancellable {
 	override var cancelled: Boolean
 		get() = impl.isCancelled()
-		set(b) = impl.setCancelled(b)
+		set(b) = runTask { impl.setCancelled(b) }
 	override val player = impl.player;
+	override val location = impl.clickedBlock?.location ?: impl.player.getTargetBlock(null, 20).location;
 }
 
 // when the player left clicks
@@ -82,8 +89,6 @@ class CRightClickEvent(impl: PlayerInteractEvent) : CClickEvent(impl, "right-cli
 // superclass for simple custom player events
 abstract class CSimplePlayerEvent(override val player: Player, override val name: String) : CPlayerEvent;
 
-// ran every tick
-class CLoopEvent(p: Player) : CSimplePlayerEvent(p, "loop")
 // ran when a player subscribes
 class CSubscribeEvent(p: Player) : CSimplePlayerEvent(p, "subscribe")
 // ran when a player unsubscribes

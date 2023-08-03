@@ -13,9 +13,12 @@ class CodeUnit(val location: Location, val name: String, val owner: String) {
 		@JvmStatic fun fromJSON(name: String, o: JSONObject): CodeUnit {
 			return CodeUnit(Utils.deserializeLocation(o["location"]), name, o["owner"] as String);
 		}
+		// CodeUnit dimensions
+		val WIDTH = 32;
 	}
 
-	var events: Map<String, Tree> = mapOf();
+	var events: Map<String, Tree> = mapOf(); // events
+	var functions: Map<String, CFunction> = mapOf(); // functions
 	var globals: MutableMap<String, Var> = mutableMapOf(); // stores global variables. all variables inside should have scope 0
 	var log: MutableList<String> = mutableListOf(); // stores a log
 
@@ -34,20 +37,25 @@ class CodeUnit(val location: Location, val name: String, val owner: String) {
 			globals = mutableMapOf();
 			if(tree !is Tree.Do)
 				throw ParseException(tree.loc, "Invalid tree.");
-			var map  = mutableMapOf<String, Tree>();
+			var eventsMap = mutableMapOf<String, Tree>();
+			var functionsMap = mutableMapOf<String, CFunction>();
 			for(t in tree.children) {
 				when(t) {
 					is Tree.Event -> {
-						map[t.name] = t;
+						eventsMap[t.name] = t;
 					}
 					is Tree.Declare -> {
 						var exec = Executor(0u, ExecutorContext(this, null, false), globals)
 						exec.run(t);
 					}
+					is Tree.Function -> {
+						functionsMap[t.name] = t.fn;
+					}
 					else -> throw ParseException(t.loc, "Non-event at top level.")
 				}
 			}
-			events = map;
+			events = eventsMap;
+			functions = functionsMap;
 			handleEvent(CInitEvent());
 		} catch(e: CodeException) {
 			log("&c${e.toChatString()}");
