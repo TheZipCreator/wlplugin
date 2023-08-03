@@ -105,7 +105,7 @@ object CodeListener : Listener {
 					when(item) {
 						editingItems[0] -> {
 							// add line
-							val left = edge(block, BlockFace.SOUTH).getRelative(BlockFace.DOWN);
+							val left = edge(block, BlockFace.SOUTH);
 							val w = left.world;
 							for(y in -64..left.y-1) {
 								for(x in left.x..left.x+1) {
@@ -241,13 +241,13 @@ object CodeListener : Listener {
 						bd.facing = BlockFace.SOUTH;
 						block.blockData = bd;
 					}
-					CodeItem.EVENT -> makeInputSign("event")
+					CodeItem.EVENT -> makeInputSign("event", { it in validEvents})
 					CodeItem.FUNCTION -> makeInputSign("function")
 					CodeItem.BUILTIN -> {
 						var bd = block.blockData as Directional;
 						bd.facing = BlockFace.EAST;
 						block.blockData = bd;
-						makeInputSign("builtin");
+						makeInputSign("builtin", { builtins.containsKey(it) });
 					}
 					CodeItem.CALL -> makeInputSign("call", displayName="function")
 					CodeItem.IF -> makeSign(block, "&lIF");

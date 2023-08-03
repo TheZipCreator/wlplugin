@@ -8,6 +8,7 @@ import org.bukkit.event.block.*;
 import org.bukkit.event.player.*;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.*;
+import java.util.concurrent.atomic.*;
 
 import org.json.simple.*;
 
@@ -173,7 +174,13 @@ class CFunction(val args: List<String>, val body: Tree) {
 }
 
 // context for interpreting - shared between an executor and all its children
-class ExecutorContext(val unit: CodeUnit, val event: CEvent?, var stopped: Boolean);
+// operationsLeft is an operation limit - an error is thrown if it exceeds this. Set to -1 to disable
+class ExecutorContext(val unit: CodeUnit, val event: CEvent?, var operationsLeft: Int = -1) {
+	private var _stopped: AtomicReference<Boolean> = AtomicReference(false);
+	var stopped
+		get() = _stopped.`get`()
+		set(v) = _stopped.`set`(v)
+}
 
 class ExecutionException(loc: Location?, msg: String) : CodeException(loc, msg);
 class Return(loc: Location, val value: Value) : CodeException(loc, "Unexpected return.");
@@ -183,9 +190,16 @@ class Continue(loc: Location) : CodeException(loc, "Unexpected continue.");
 // a variable
 class Var(val scope: UInt, var value: Value);
 
-class Executor(val scope: UInt, val ctx: ExecutorContext, table: MutableMap<String, Var>? = null) {
-	var vartable: MutableMap<String, Var> = table ?: mutableMapOf();
-	
+class Executor(val scope: UInt, val ctx: ExecutorContext, var vartable: MutableMap<String, Var> = mutableMapOf()) {	
+	// signals that an operation has been done
+	private fun op(l: Location) {
+		if(ctx.stopped)
+			throw ExecutionException(l, "Halted");
+		if(ctx.operationsLeft == 0)
+			throw ExecutionException(l, "Exceeded operation limit!");
+		if(ctx.operationsLeft != -1)
+			ctx.operationsLeft -= 1;
+	}
 	// evals children
 	private fun evalChildren(children: List<Tree>): Value {
 		var v: Value = Value.Unit;
@@ -195,8 +209,9 @@ class Executor(val scope: UInt, val ctx: ExecutorContext, table: MutableMap<Stri
 	}
 	// creates a sub-context
 	private fun sub() = Executor(scope+1u, ctx, vartable.toMutableMap());
-	// evaluates a tree. should be called asynchronously.
+	// evaluates a tree. if called synchronously, an operations limit should be applied
 	fun eval(tree: Tree): Value {
+		op(tree.loc);
 		when(tree) {
 			is Tree.Event -> return evalChildren(tree.children)
 			is Tree.Function -> throw ExecutionException(tree.loc, "Unexpected function")
@@ -225,6 +240,7 @@ class Executor(val scope: UInt, val ctx: ExecutorContext, table: MutableMap<Stri
 				var ret: Value = Value.Unit;
 				try {
 					for(elem in list.list) {
+						op(tree.loc);
 						var subExec = sub();
 						subExec.vartable[tree.varName] = Var(subExec.scope, elem);
 						try {
@@ -279,8 +295,33 @@ class Executor(val scope: UInt, val ctx: ExecutorContext, table: MutableMap<Stri
 						}
 						"location" -> {
 							if(ctx.event !is CLocationEvent)
-								throw ExecutionException(tk.loc, "Paramater 'location' is only valid for location events.");
+								throw ExecutionException(tk.loc, "Parameter 'location' is only valid for location events.");
 							return Value.Loc(ctx.event.location);
+						}
+						"item" -> {
+							if(ctx.event !is CItemEvent)
+								throw ExecutionException(tk.loc, "Parameter 'item' is only valid for item events.")
+							return if(ctx.event.item == null) Value.Unit else Value.Item(ctx.event.item!!);
+						}
+						"gamemode" -> {
+							if(ctx.event !is CGameModeChangeEvent)
+								throw ExecutionException(tk.loc, "Parameter 'gamemode' is only valid for the change gamemode event.");
+							return Value.String(ctx.event.gamemode.lispCase())
+						}
+						"entity" -> {
+							if(ctx.event !is CEntityEvent)
+								throw ExecutionException(tk.loc, "Parameter 'entity' is only valid for entity events.");
+							return Value.Entity(ctx.event.entity);
+						}
+						"slot" -> {
+							if(ctx.event !is CSlotEvent)
+								throw ExecutionException(tk.loc, "Parameter 'slot' is only valid for slot events.");
+							return Value.Number(ctx.event.slot.toDouble());
+						}
+						"block" -> {
+							if(ctx.event !is CBlockEvent)
+								throw ExecutionException(tk.loc, "Parameter 'block' is only valid for block events.");
+							return Value.Item(ItemStack(ctx.event.block.type));
 						}
 						else -> throw ExecutionException(tk.loc, "Invalid parameter ${tk.name}")
 					}
@@ -337,5 +378,9 @@ class Executor(val scope: UInt, val ctx: ExecutorContext, table: MutableMap<Stri
 			task();
 		else
 			runTaskAsync(task);
+	}
+	// halt this executor
+	fun halt() {
+		ctx.stopped = true;
 	}
 }

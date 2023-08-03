@@ -35,9 +35,10 @@ class CodeModule : Module {
 			}
 		}
 		Bukkit.getScheduler().runTaskTimer(WlPlugin.instance, Runnable {
-			for(p in Bukkit.getServer().onlinePlayers) {
-				CLoopEvent().execute();
-			}
+			runTask.update();
+			for(u in Data.codeUnits.values)
+				u.update();
+			CLoopEvent().execute();
 		}, 20, 1);
 		WlPlugin.info("wlcode enabled");
 	}
@@ -48,6 +49,8 @@ class CodeModule : Module {
 			if(pd.codeMode)
 				toggleCodeMode(p);
 		}
+		for(u in Data.codeUnits.values)
+			u.halt();
 		WlPlugin.info("wlcode disabled");
 	}
 }
@@ -93,7 +96,7 @@ enum class CodeItem(val item: ItemStack) {
 
 internal val blocksItem = mkItem(Material.DIAMOND, "&bCode Blocks");
 internal val editingItems = listOf<ItemStack>(
-	mkItem(Material.LIME_CANDLE, "&aAdd line", "&7Adds a line after another line.", "&7Left click to change."),
+	mkItem(Material.LIME_CANDLE, "&aAdd line", "&7Adds a line before a line.", "&7Left click to change."),
 	mkItem(Material.RED_CANDLE, "&cRemove line", "&7Removes a line.", "&7Left click to change."),
 	mkItem(Material.LIME_DYE, "&aAdd space", "&7Adds a space.", "&7Left click to change."),
 	mkItem(Material.RED_DYE, "&cRemove space", "&7Removes a space.", "&7Left click to change.")

@@ -267,11 +267,14 @@ class Parser(var loc: Location) {
 					Material.PRISMARINE_BRICKS -> return Token.Parameter(loc, readSign());
 					Material.BARREL -> {
 						val inv = (b!!.state as Barrel).inventory;
+						if(inv.isEmpty()) {
+							return Token.Item(loc, ItemStack(Material.AIR));
+						}
 						for(i in 0..inv.size-1) {
 							val item = inv.getItem(i);
 							if(item == null)
 								continue;
-							nextTokens.add(Token.Item(loc, item));
+							nextTokens.add(Token.Item(loc, item.clone()));
 						}
 						return next();
 					}

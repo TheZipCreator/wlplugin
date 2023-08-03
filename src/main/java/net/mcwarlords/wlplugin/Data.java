@@ -7,7 +7,8 @@ import net.mcwarlords.wlplugin.code.*;
 
 
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
+import org.bukkit.event.*;
+import org.bukkit.event.player.*;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.json.simple.*;
@@ -94,14 +95,21 @@ public class Data {
 				codeUnits.put(name, CodeUnit.fromJSON(name, (JSONObject)jsonCodeUnits.get(o)));
 			}
 		}
-		WlPlugin.addListener(
-			new Listener() {
-				@EventHandler public void onJoin(PlayerJoinEvent e) {
-					Player p = e.getPlayer();
-					UUIDs.put(Utils.getUUID(p), p.getName());
-				}
+		WlPlugin.addListener(new Listener() {
+			@EventHandler public void onJoin(PlayerJoinEvent e) {
+				Player p = e.getPlayer();
+				UUIDs.put(Utils.getUUID(p), p.getName());
 			}
-		);
+			@EventHandler public void onSneak(PlayerToggleSneakEvent e) {
+				getPlayerData(e.getPlayer()).isSneaking = e.isSneaking();
+			}
+			@EventHandler public void onSprint(PlayerToggleSprintEvent e) {
+				getPlayerData(e.getPlayer()).isSprinting = e.isSprinting();
+			}
+			@EventHandler public void onFly(PlayerToggleFlightEvent e) {
+				getPlayerData(e.getPlayer()).isFlying = e.isFlying();
+			}
+		});
 		WlPlugin.info("Data loaded.");
 	}
 	public static void onDisable() {

@@ -20,6 +20,7 @@ public class PlayerData {
 	// general
 	public String uuid;
 	public Consumer<String> inputCB = null; // used by `Utils.getInput()`
+	public boolean isSneaking = false, isFlying = false, isSprinting = false;
 	// chat
 	public String channel = "global";
 	public boolean hideGlobal = false;

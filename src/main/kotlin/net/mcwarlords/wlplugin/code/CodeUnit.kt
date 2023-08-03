@@ -21,14 +21,17 @@ class CodeUnit(val location: Location, val name: String, val owner: String) {
 	var functions: Map<String, CFunction> = mapOf(); // functions
 	var globals: MutableMap<String, Var> = mutableMapOf(); // stores global variables. all variables inside should have scope 0
 	var log: MutableList<String> = mutableListOf(); // stores a log
+	private var executors: MutableList<Executor> = mutableListOf(); // stores all executors
 
+	// converts to json
 	fun toJSON(): JSONObject {
 		var o = JSONObject();
 		o["location"] = Utils.serializeLocation(location);
 		o["owner"] = owner;
 		return o;
 	}
-
+	
+	// builds the unit
 	fun build(loadCache: Boolean = true) {
 		try {
 			if(loadCache)
@@ -45,7 +48,7 @@ class CodeUnit(val location: Location, val name: String, val owner: String) {
 						eventsMap[t.name] = t;
 					}
 					is Tree.Declare -> {
-						var exec = Executor(0u, ExecutorContext(this, null, false), globals)
+						var exec = Executor(0u, ExecutorContext(this, null), globals)
 						exec.run(t);
 					}
 					is Tree.Function -> {
@@ -65,20 +68,34 @@ class CodeUnit(val location: Location, val name: String, val owner: String) {
 			throw e;
 		}
 	}
-
-	fun handleEvent(e: CEvent, sync: Boolean = false) {
+	
+	// handles an event
+	fun handleEvent(e: CEvent, sync: Boolean = e is CCancellable) {
 		if(!events.containsKey(e.name))
 			return;
-		var exec = Executor(1u, ExecutorContext(this, e, false), globals);
+		var exec = Executor(1u, ExecutorContext(this, e, if(sync) 10000 else -1), globals);
 		exec.run(events[e.name]!!, true, sync);
+		executors.add(exec);
 		return;
 	}
 
-	val MAX_LOG_SIZE = 100;
-
+	val MAX_LOG_SIZE = 100; // maximum log size
+	
+	// log a value
 	fun log(s: Any) {
 		log.add(s.toString());
 		if(log.size > MAX_LOG_SIZE)
 			log.removeAt(0);
+	}
+
+	// should be called every tick
+	fun update() {
+		executors.removeAll { it.ctx.stopped };
+	}
+
+	// halts all executors
+	fun halt() {
+		for(exec in executors)
+			exec.halt();
 	}
 }

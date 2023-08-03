@@ -19,6 +19,7 @@ object CodeCommand : CommandExecutor {
 		p.sendMessage(Utils.escapeText("&_p/wlcode l | log <name> &_s- &_dPrints out the debug logs for a unit."));
 		p.sendMessage(Utils.escapeText("&_p/wlcode cc | cacheclear <name> &_s- &_dClears the cache of a unit and builds it without loading cache."));
 		p.sendMessage(Utils.escapeText("&_p/wlcode cv | cacheview <name> &_s- &_dViews the cache of a unit."));
+		p.sendMessage(Utils.escapeText("&_p/wlcode ha | halt <name> &_s- &_dHalts a unit."));
     p.sendMessage(Utils.escapeText("&_p/wlcode m | mode &_s- &_dToggles code mode"));
 	}
 
@@ -143,6 +144,11 @@ object CodeCommand : CommandExecutor {
 				var obj = Data.cacheObject(cu.name);
 				obj.put("__type", "map"); // make it readable by Value.deserialize()
 				p.sendMessage(Value.deserialize(obj).toString());
+			}
+			"ha", "halt" -> run {
+				val cu = getCodeUnit(true) ?: return@run;
+				cu.halt();
+				p.sendMessage(Utils.escapeText("&_p* &_dHalted unit ${cu.name}."));
 			}
 			"sl", "subscribelist" -> run {
 				if(args.size != 1) {

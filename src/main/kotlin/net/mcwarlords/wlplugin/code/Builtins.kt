@@ -9,6 +9,7 @@ import org.bukkit.util.*;
 import kotlin.math.*;
 import kotlin.random.*;
 import java.util.concurrent.atomic.*;
+import java.util.concurrent.*;
 
 import java.util.UUID;
 
@@ -34,11 +35,48 @@ private fun argsOneOf(loc: Location, args: List<Value>, name: String, vararg amo
 		throw ExecutionException(loc, "$name takes ${amounts.toList().subList(0, amounts.size-1).joinToString(", ")} or ${amounts[amounts.size-1]} arguments.");
 }
 
-internal fun runTask(task: () -> Unit) {
-	Bukkit.getScheduler().runTask(WlPlugin.instance, task);
+private typealias SafeList<T> = CopyOnWriteArrayList<T>; // simpler name
+
+// manages running tasks
+internal object runTask {
+	private val MAX_TASKS = 5000;
+	private val TASKS_PER_TICK = 100; // amount of tasks to execute per tick
+	var taskQueue = SafeList<() -> Unit>(); // queue of tasks (not sure if this is super thread safe but if it becomes a problem I'll replace it with something else). length never exceeds MAX_TASKS
+	operator fun invoke(task: () -> Unit) {
+		// you're not *supposed to* use this to detect if something is running async, but there's no other way to detect it so idk
+		// it seems to work for now
+		if(Bukkit.isPrimaryThread())
+			task();
+			else if(taskQueue.size < MAX_TASKS)
+			taskQueue.add(task);
+	}
+	
+	// should be run every tick, synchronously.
+	fun update() {
+		for(i in 0..<TASKS_PER_TICK) {
+			if(taskQueue.size == 0)
+				break;
+			taskQueue.removeAt(0)();
+		}
+	}
+	
+	// whether a task queued will actually be run
+	fun available(): Boolean = taskQueue.size < MAX_TASKS;
 }
+
 internal fun runTaskAsync(task: () -> Unit) {
 	Bukkit.getScheduler().runTaskAsynchronously(WlPlugin.instance, task);
+}
+
+// takes something that calls the bukkit API and waits for a response
+internal fun <T> bukkitCall(task: () -> T): T {
+	while(!runTask.available())
+		Thread.sleep(500);
+	var done: AtomicBoolean = AtomicBoolean(false);
+	var ref: AtomicReference<T?> = AtomicReference(null);
+	runTask({ ref.`set`(task()); done.`set`(true) })
+	while(!done.`get`());
+	return ref.`get`()!!;
 }
 
 typealias Builtin = (exec: Executor, loc: Location, args: List<Value>) -> Value;
@@ -275,6 +313,18 @@ internal val builtins = mapOf<String, Builtin>(
 		val pd = Data.getPlayerData(player);
 		Value.Bool(exec.ctx.unit.name in pd.subscribed);
 	},
+	"sneaking?" to { _, loc, args ->
+		argsEqual(loc, args, "sneaking?", 1)
+		Value.Bool(Data.getPlayerData(args[0].getPlayer(loc)).isSneaking)
+	},
+	"sprinting?" to { _, loc, args ->
+		argsEqual(loc, args, "sprinting?", 1)
+		Value.Bool(Data.getPlayerData(args[0].getPlayer(loc)).isSprinting)
+	},
+	"flying?" to { _, loc, args ->
+		argsEqual(loc, args, "flying?", 1)
+		Value.Bool(Data.getPlayerData(args[0].getPlayer(loc)).isFlying)
+	},
 	// entity actions
 	// teleports an entity
 	"teleport" to { _, loc, args ->
@@ -287,12 +337,7 @@ internal val builtins = mapOf<String, Builtin>(
 		argsEqual(loc, args, "spawn", 2);
 		val type = args[0].toEnum<EntityType>(loc);
 		val l = args[1].getLocation(loc);
-		var e: AtomicReference<Entity?> = AtomicReference(null);
-		runTask {
-			e.`set`(l.world!!.spawnEntity(l, type));
-		}
-		while(e.`get`() == null); // wait until spawned
-		Value.Entity(e.`get`()!!);
+		Value.Entity(bukkitCall { l.world!!.spawnEntity(l, type) });
 	},
 	// launches a projectile from a given entity. returns the projectile.
 	"launch-projectile" to { _, loc, args ->
@@ -304,12 +349,7 @@ internal val builtins = mapOf<String, Builtin>(
 		val clazz = type.getEntityClass();
 		if(!Projectile::class.java.isAssignableFrom(type.entityClass!!))
 			throw ExecutionException(loc, "Entity type '${args[1]}' is not a projectile.");
-		var e: AtomicReference<Entity?> = AtomicReference(null);
-		runTask {
-			e.`set`(source.launchProjectile(clazz as Class<Projectile>)); // honestly surprised this cast even works
-		}
-		while(e.`get`() == null);
-		Value.Entity(e.`get`()!!);
+		Value.Entity(bukkitCall { source.launchProjectile(clazz as Class<Projectile>) }); // honestly surprised this cast even works
 	},
 	// damages an entity
 	"damage" to { _, loc, args ->
@@ -455,6 +495,20 @@ internal val builtins = mapOf<String, Builtin>(
 		argsEqual(loc, args, "list-length", 1);
 		Value.Number(args[0].getList(loc).size.toDouble());
 	},
+	// slices a list
+	"list-slice" to { _, loc, args ->
+		argsEqual(loc, args, "list-slice", 3);
+		val list = args[0].getList(loc);
+		val start = args[1].getNum(loc).toInt();
+		val end = args[2].getNum(loc).toInt();
+		if(start > end)
+			throw ExecutionException(loc, "Start of slice is greater than end.");
+		if(start < 0 || start >= list.size)
+			throw ExecutionException(loc, "Start is out of bounds.");
+		if(end < 0 || end > list.size)
+			throw ExecutionException(loc, "End is out of bounds.");
+		Value.List(list.subList(start, end));
+	},
 	// map operations
 	// get a map value
 	"map-get" to { _, loc, args ->
@@ -476,6 +530,39 @@ internal val builtins = mapOf<String, Builtin>(
 	"map-has" to { _, loc, args ->
 		argsEqual(loc, args, "map-has", 2);
 		Value.Bool(args[0].getMap(loc).containsKey(args[1].toString()));
+	},
+	"map-delete" to { _, loc, args ->
+		argsEqual(loc, args, "map-delete", 2);
+		val map = args[0].getMap(loc);
+		val key = args[1].toString();
+		if(!map.containsKey(key))
+			throw ExecutionException(loc, "Map does not have key '$key'");
+		map.remove(key);
+		Value.Unit
+	},
+	// strings
+	"string-cat" to { _, _, args ->
+		Value.String(buildString {
+			for(v in args)
+				append(v);
+		});
+	},
+	"string-length" to { _, loc, args ->
+		argsEqual(loc, args, "string-length", 1);
+		Value.Number(args[0].toString().length.toDouble())
+	},
+	"string-slice" to { _, loc, args ->
+		argsEqual(loc, args, "string-slice", 3);
+		val str = args[0].toString();
+		val start = args[1].getNum(loc).toInt();
+		val end = args[2].getNum(loc).toInt();
+		if(start > end)
+			throw ExecutionException(loc, "Start of slice is greater than end.");
+		if(start < 0 || start >= str.length)
+			throw ExecutionException(loc, "Start is out of bounds.");
+		if(end < 0 || end > str.length)
+			throw ExecutionException(loc, "End is out of bounds.");
+		Value.String(str.substring(start, end));
 	},
 	// conversions
 	"to-string" to { _, loc, args ->
@@ -512,10 +599,7 @@ internal val builtins = mapOf<String, Builtin>(
 	"get-block" to { _, loc, args ->
 		argsEqual(loc, args, "get-block", 1);
 		val l = args[0].getLocation(loc);
-		var mat: AtomicReference<Material?> = AtomicReference(null);
-		runTask { mat.`set`(l.world?.getBlockAt(l)?.type ?: Material.AIR) }
-		while(mat.`get`() == null);
-		Value.Item(ItemStack(mat.`get`()!!, 1));
+		Value.Item(ItemStack(bukkitCall { l.world?.getBlockAt(l)?.type ?: Material.AIR }, 1));
 	},
 	// misc
 	// logs to the unit's log
@@ -553,11 +637,12 @@ internal val builtins = mapOf<String, Builtin>(
 		Data.cacheGet(exec.ctx.unit.name, name) ?: Value.Unit
 	},
 	"spawn-particle" to { _, loc, args ->
-		argsEqual(loc, args, "spawn-particle", 3);
+		argsEqual(loc, args, "spawn-particle", 4);
 		val type = args[0].toEnum<Particle>(loc);
 		val l = args[1].getLocation(loc);
 		val count = args[2].getNum(loc).toInt();
-		runTask { loc.world?.spawnParticle(type, l, count, 0.0, 0.0, 0.0, 0.0) }
+		val speed = args[3].getNum(loc);
+		runTask { loc.world?.spawnParticle(type, l, count, 0.0, 0.0, 0.0, speed) }
 		Value.Unit
 	},
 	"online-players" to { _, _, _ ->
