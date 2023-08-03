@@ -49,3 +49,5 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 - Added `/wlmisc selstart` and `/wlmisc selend`
 - Added `/wlmisc csolid`
 - Fixed issues with compactified structure scaling.
+## 1.7.0
+- Added wlcode module.

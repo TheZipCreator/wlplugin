@@ -23,7 +23,7 @@ import org.bukkit.command.*;
 import org.bukkit.event.*;
 
 public class WlPlugin extends JavaPlugin {
-	public static final String VERSION = "1.6.1";
+	public static final String VERSION = "1.7.0";
 	public static WlPlugin instance;
 	public static Random rand;
 	public static final char prefixCol		= '4';
