@@ -55,9 +55,11 @@ object CodeCommand : CommandExecutor {
 				return null;
 			}
 			val cu = Data.codeUnits[name]!!;
-			if(!owned && cu.owner != Data.uuidOf(p.name)) {
-				p.sendMessage(Utils.escapeText("&_p* &_eYou do not own unit $name."));
-				return null;
+			if(owned) {
+				if(cu.owner != Data.uuidOf(p.name)) {
+					p.sendMessage(Utils.escapeText("&_p* &_eYou do not own unit $name."));
+					return null;
+				}
 			}
 			return cu;
 		}
