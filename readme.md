@@ -56,3 +56,4 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 - wlcode: Fixed race condition with global variables.
 - wlcode: Fixed global variables not being accessible in functions.
 - wlcode: Added `remove-item` builtin
+- wlcode: Changed `player-by-uuid` and `player-by-name` so they now just return Unit on failure.

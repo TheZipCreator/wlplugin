@@ -273,7 +273,7 @@ internal val builtins = mapOf<String, Builtin>(
 		val name = args[0].toString();
 		val player = Bukkit.getPlayer(name);
 		if(player == null)
-			throw ExecutionException(loc, "Player '$name' is offline or does not exist.");
+			return@fn Value.Unit;
 		Value.Entity(player);
 	},
 	// gets a player by a UUID
@@ -283,7 +283,7 @@ internal val builtins = mapOf<String, Builtin>(
 		try {
 			val player = Bukkit.getPlayer(UUID.fromString(name));
 			if(player == null)
-				throw ExecutionException(loc, "Player with UUID '$name' is offline or does not exist.");
+				return@fn Value.Unit;
 			Value.Entity(player);
 		} catch(e: IllegalArgumentException) {
 			throw ExecutionException(loc, "Invalid UUID '$name'");
