@@ -51,3 +51,5 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 - Fixed issues with compactified structure scaling.
 ## 1.7.0
 - Added wlcode module.
+## 1.7.1
+- Fixed bug with `effect` module where it would ask for incorrect arguments.
