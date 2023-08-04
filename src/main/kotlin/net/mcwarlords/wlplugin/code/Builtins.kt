@@ -366,7 +366,7 @@ internal val builtins = mapOf<String, Builtin>(
 		val entity = args[0].getEntity(loc);
 		if(entity !is LivingEntity)
 			throw ExecutionException(loc, "Can not apply potion effect to entity.");
-		val type = potionTypeFromValue(loc, args[0]);
+		val type = potionTypeFromValue(loc, args[1]);
 		val duration = args[2].getNum(loc).toInt();
 		val amplifier = args[3].getNum(loc).toInt();
 		val effect = when(args.size) {
