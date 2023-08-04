@@ -57,3 +57,5 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 - wlcode: Fixed global variables not being accessible in functions.
 - wlcode: Added `remove-item` builtin
 - wlcode: Changed `player-by-uuid` and `player-by-name` so they now just return Unit on failure.
+## 1.7.2
+- wlplot: Action bar no longer displays while holding debug stick
