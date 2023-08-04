@@ -236,11 +236,25 @@ internal val builtins = mapOf<String, Builtin>(
 			items.add(v.item);
 		}
 		runTask {
-			val inv = player.getInventory();
 			for(item in items)
-				inv.addItem(item);
+				player.inventory.addItem(item); 
 		};
 		return@fn Value.Unit;
+	},
+	"remove-item" to { _, loc, args ->
+		argsAtLeast(loc, args, "remove-item", 1);
+		val player = args[0].getPlayer(loc);
+		var items = mutableListOf<ItemStack>();
+		for(v in args.subList(1, args.size)) {
+			if(v !is Value.Item)
+				throw ExecutionException(loc, "Item expected, got ${v.typeName()}.");
+			items.add(v.item);
+		}
+		runTask {
+			for(item in items)
+				player.inventory.addItem(item); 
+		};
+		Value.Unit
 	},
 	// player values
 	// gets the item a player is holding in their main hand

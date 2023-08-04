@@ -160,7 +160,7 @@ sealed class Value private constructor() {
 // represents a function
 class CFunction(val args: List<String>, val body: Tree) {
 	fun call(ctx: ExecutorContext, params: List<Value>): Value {
-		var vars = mutableMapOf<String, Var>();
+		var vars = ctx.unit.globals.toMutableMap();
 		for(i in args.indices) {
 			vars[args[i]] = Var(1u, if(i < args.size) params[i] else Value.Unit);
 		}

@@ -52,5 +52,7 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 ## 1.7.0
 - Added wlcode module.
 ## 1.7.1
-- Fixed bug with `effect` module where it would ask for incorrect arguments.
-- Fixed race condition with global variables.
+- wlcode: Fixed bug with `effect` builtin where it would ask for incorrect arguments.
+- wlcode: Fixed race condition with global variables.
+- wlcode: Fixed global variables not being accessible in functions.
+- wlcode: Added `remove-item` builtin
