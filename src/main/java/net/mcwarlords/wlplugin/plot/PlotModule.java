@@ -13,10 +13,10 @@ import net.md_5.bungee.api.chat.TextComponent;
 import java.util.*;
 
 public class PlotModule implements Module {
-  @Override public void onEnable() {
-    WlPlugin.info("wlplot enabled");
-    WlPlugin.addListener(new PlotListener());
-    WlPlugin.addCommand("wlplot", new PlotCommand(), new TabCompleter() {
+	@Override public void onEnable() {
+		WlPlugin.info("wlplot enabled");
+		WlPlugin.addListener(new PlotListener());
+		WlPlugin.addCommand("wlplot", new PlotCommand(), new TabCompleter() {
 			public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
 				if(args.length == 1)
 					return List.of(
@@ -32,32 +32,34 @@ public class PlotModule implements Module {
 				return List.of();
 			}	
 		});
-    new BukkitRunnable() {
-      public void run() {
-        for(Player p : Bukkit.getOnlinePlayers()) {
-          Location l = p.getLocation();
-          if(l.getWorld() == Bukkit.getWorlds().get(0)) {
-            int plotId = Utils.getPlotAt((int)l.getX(), (int)l.getZ());
-            String msg = "&_pCurrently in: ";
-            if(plotId == -1)
-              msg += "&_sFree Area";
-            else {
-              if(plotId < Data.plotOwners.size())
-                msg += "&_e"+Data.nameOf(Data.plotOwners.get(plotId))+"&_s's Plot ";
-              else
-                msg += "&_s Unowned Plot ";
-              msg += "(#"+Integer.toString(plotId)+")";
-            }
-            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(Utils.escapeText(msg)));
-          }
-        }
-      }
-    }.runTaskTimer(WlPlugin.instance, 0, 10);
-  }
+		new BukkitRunnable() {
+			public void run() {
+				for(Player p : Bukkit.getOnlinePlayers()) {
+					if(p.getInventory().getItemInMainHand().getType() == Material.DEBUG_STICK)
+						return; // don't interfere with debug stick
+					Location l = p.getLocation();
+					if(l.getWorld() == Bukkit.getWorlds().get(0)) {
+						int plotId = Utils.getPlotAt((int)l.getX(), (int)l.getZ());
+						String msg = "&_pCurrently in: ";
+						if(plotId == -1)
+							msg += "&_sFree Area";
+						else {
+							if(plotId < Data.plotOwners.size())
+								msg += "&_e"+Data.nameOf(Data.plotOwners.get(plotId))+"&_s's Plot ";
+							else
+								msg += "&_s Unowned Plot ";
+							msg += "(#"+Integer.toString(plotId)+")";
+						}
+						p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(Utils.escapeText(msg)));
+					}
+				}
+			}
+		}.runTaskTimer(WlPlugin.instance, 0, 10);
+	}
 
-  @Override public void onDisable() {
-    WlPlugin.info("wlplot disabled");
-  }
-  
-  
+	@Override public void onDisable() {
+		WlPlugin.info("wlplot disabled");
+	}
+	
+	
 }
