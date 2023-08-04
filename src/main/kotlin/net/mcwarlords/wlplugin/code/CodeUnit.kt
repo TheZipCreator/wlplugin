@@ -48,8 +48,8 @@ class CodeUnit(val location: Location, val name: String, val owner: String) {
 						eventsMap[t.name] = t;
 					}
 					is Tree.Declare -> {
-						var exec = Executor(0u, ExecutorContext(this, null), globals)
-						exec.run(t);
+						var exec = Executor(0u, ExecutorContext(this, null, 100), globals)
+						exec.eval(t);
 					}
 					is Tree.Function -> {
 						functionsMap[t.name] = t.fn;

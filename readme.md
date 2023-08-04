@@ -53,3 +53,4 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 - Added wlcode module.
 ## 1.7.1
 - Fixed bug with `effect` module where it would ask for incorrect arguments.
+- Fixed race condition with global variables.
