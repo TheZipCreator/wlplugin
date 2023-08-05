@@ -62,7 +62,8 @@ public class DiscordModule implements Module {
   @Override public void onDisable() {
     WlPlugin.info("wldiscord disabled");
     message("&cwldiscord disabled");
-    jda.shutdown();
+		if(jda == null)
+    	jda.shutdown();
   }
 
   public static void message(String msg) {
