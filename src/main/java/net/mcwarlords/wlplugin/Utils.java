@@ -437,7 +437,7 @@ public class Utils {
 					p.sendMessage(escapeText(message));
 			}
 			DiscordModule.message(message);
-			WlPlugin.info("[CHAT] "+escapeText(message));
+			WlPlugin.info("[CHAT] "+escapeTextAnsi(message));
 			return;
 		}
 		for(Player p : Bukkit.getOnlinePlayers()) {
