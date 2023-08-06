@@ -59,3 +59,5 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 - wlcode: Changed `player-by-uuid` and `player-by-name` so they now just return Unit on failure.
 ## 1.7.2
 - wlplot: Action bar no longer displays while holding debug stick
+- wlcode: Added many new item, enum, and string builtins.
+- wlcode: Fixed bug where parser would ignore the last column of code.

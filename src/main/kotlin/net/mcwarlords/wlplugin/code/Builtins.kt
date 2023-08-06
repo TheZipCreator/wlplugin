@@ -638,6 +638,10 @@ internal val builtins = mapOf<String, Builtin>(
 		argsEqual(loc, args, "string-lowercase", 1);
 		Value.String(args[0].toString().lowercase());
 	},
+	"string-contains" to { _, loc, args ->
+		argsEqual(loc, args, "string-contains", 2);
+		Value.Bool(args[0].toString().contains(args[1].toString()))
+	},
 	// conversions
 	"to-string" to { _, loc, args ->
 		argsEqual(loc, args, "to-string", 1);
