@@ -193,10 +193,10 @@ class Parser(var loc: Location) {
 			return null;
 		var b = loc.block;
 		loc.z -= 1;
-		if(startZ-loc.z >= 32) {
+		if(startZ-loc.z > CodeUnit.WIDTH) {
 			loc.z = startZ;
 			loc.y -= 1;
-			if(loc.y < 64) {
+			if(loc.y < -64) {
 				eof = true;
 			}
 		}
