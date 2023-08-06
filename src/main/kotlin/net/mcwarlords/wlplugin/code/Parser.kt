@@ -111,6 +111,7 @@ sealed class Token(val loc: Location) {
 	class Continue(l: Location) : Token(l);
 	class Function(l: Location, val name: KString) : Token(l);
 	class Call(l: Location, val name: KString) : Token(l);
+	class Import(l: Location, val name: KString) : Token(l);
 
 	override fun toString(): kotlin.String = when(this) {
 		is If -> "if"
@@ -138,6 +139,7 @@ sealed class Token(val loc: Location) {
 		is Continue -> "continue"
 		is Function -> "function '$name'"
 		is Call -> "call '$name'"
+		is Import -> "import '$name'"
 	}
 
 	fun name(): kotlin.String = when(this) {
@@ -166,6 +168,7 @@ sealed class Token(val loc: Location) {
 		is Continue -> "continue"
 		is Function -> "function"
 		is Call -> "call"
+		is Import -> "import"
 	}
 }
 
@@ -217,7 +220,7 @@ class Parser(var loc: Location) {
 			if(b == null)
 				return null;
 			fun readSign(): String {
-				var lines = (b!!.getRelative(BlockFace.EAST).state as Sign).lines;
+				var lines = (b!!.getRelative(BlockFace.EAST).state as Sign).getSide(Side.FRONT).lines;
 				return lines.slice(1..lines.size-1).joinToString("");
 			}
 			if(b.type != Material.REDSTONE_LAMP && b.type != Material.BLACK_STAINED_GLASS) {
@@ -237,6 +240,7 @@ class Parser(var loc: Location) {
 						return Token.Event(loc, s);
 					}
 					Material.LAPIS_BLOCK -> return Token.Function(loc, readSign());
+					Material.PURPUR_BLOCK -> return Token.Import(loc, readSign());
 					Material.FURNACE -> return Token.Builtin(loc, readSign());
 					Material.LAPIS_ORE -> return Token.Call(loc, readSign())
 					Material.OAK_PLANKS -> return Token.If(loc);
@@ -343,7 +347,7 @@ class Parser(var loc: Location) {
 			// this should be safe - if we're not at top level another block should've been parsed
 			throwEOF();
 		}
-		if(topLevel && tk !is Token.Event && tk !is Token.Declare && tk !is Token.Function)
+		if(topLevel && tk !is Token.Event && tk !is Token.Declare && tk !is Token.Function && tk !is Token.Import)
 			throw ParseException(tk.loc, "Unexpected $tk at top-level.");
 		when(tk) {
 			is Token.Lbrack, is Token.Rbrack -> {
@@ -375,11 +379,11 @@ class Parser(var loc: Location) {
 					throw ParseException(tk.loc, "Function can only be used at top-level.");
 				val args = mutableListOf<String>();
 				while(true) {
-					val tk = peek();
-					if(tk !is Token.Variable)
+					val ntk = peek();
+					if(ntk !is Token.Variable)
 						break;
 					next(); // consume
-					args.add(tk.name);
+					args.add(ntk.name);
 				}
 				return Tree.Function(tk.loc, tk.name, CFunction(args, Tree.Do(tk.loc, block()))); 
 			}

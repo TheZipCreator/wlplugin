@@ -29,19 +29,11 @@ object CodeListener : Listener {
 		bd.facing = BlockFace.EAST;
 		b2.blockData = bd;
 		var sign = b2.state as Sign;
-		/* 
-		when we update to 1.20, this will replace the other code:
 		var front = sign.getSide(Side.FRONT);
 		front.setLine(0, Utils.escapeText(ln0));
 		front.setLine(1, Utils.escapeText(ln1));
 		front.setLine(2, Utils.escapeText(ln2));
 		front.setLine(3, Utils.escapeText(ln3));
-		*/
-		sign.setLine(0, Utils.escapeText(ln0));
-		sign.setLine(1, Utils.escapeText(ln1));
-		sign.setLine(2, Utils.escapeText(ln2));
-		sign.setLine(3, Utils.escapeText(ln3));
-		sign.update(true);
 		// update the sign again later.
 		// I believe I have to do this because the client doesn't realize it's a sign immediately?
 		Bukkit.getScheduler().runTaskLater(WlPlugin.instance!!, Runnable {
@@ -61,7 +53,7 @@ object CodeListener : Listener {
 				if(item == null)
 					return;
 				if(item == blocksItem) {
-					var inv = Bukkit.createInventory(null, 27, "Code Blocks");
+					var inv = Bukkit.createInventory(null, 36, "Code Blocks");
 					for(i in CodeItem.values()) {
 						inv.addItem(i.item);
 					}
@@ -93,8 +85,10 @@ object CodeListener : Listener {
 						if(src.type == Material.OAK_WALL_SIGN) {
 							var srcState = src.state as Sign;
 							var destState = dest.state as Sign;
+							val srcFront = srcState.getSide(Side.FRONT);
+							val destFront = destState.getSide(Side.FRONT);
 							for(i in 0..3)
-								destState.setLine(i, srcState.getLine(i));
+								destFront.setLine(i, srcFront.getLine(i));
 							destState.update(true);
 						}
 					}
@@ -243,6 +237,7 @@ object CodeListener : Listener {
 					}
 					CodeItem.EVENT -> makeInputSign("event", { it in validEvents})
 					CodeItem.FUNCTION -> makeInputSign("function")
+					CodeItem.IMPORT -> makeInputSign("import", { Data.codeUnits.containsKey(it) }, "unit")
 					CodeItem.BUILTIN -> {
 						var bd = block.blockData as Directional;
 						bd.facing = BlockFace.EAST;

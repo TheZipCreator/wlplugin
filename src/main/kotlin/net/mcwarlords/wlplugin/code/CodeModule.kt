@@ -69,6 +69,7 @@ enum class CodeItem(val item: ItemStack) {
 	RBRACK(mkItem(Material.PISTON, "&6]", "&7Closes a block.")),
 	EVENT(mkItem(Material.DIAMOND_BLOCK, "&bEvent", "&7An event triggered by a player.")),
 	FUNCTION(mkItem(Material.LAPIS_BLOCK, "&bFunction", "&7A reusable bit of code that", "&7can be called from anywhere.")),
+	IMPORT(mkItem(Material.PURPUR_BLOCK, "&bImport", "&7Imports another code unit.")),
 	BUILTIN(mkItem(Material.FURNACE, "&cBuiltin", "&7A built-in function.")),
 	CALL(mkItem(Material.LAPIS_ORE, "&cCall", "&7Calls a function.")),
 	IF(mkItem(Material.OAK_PLANKS, "&6If", "&7Checks whether a condition is true.")),

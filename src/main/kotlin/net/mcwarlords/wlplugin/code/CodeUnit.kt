@@ -16,7 +16,8 @@ class CodeUnit(val location: Location, val name: String, val owner: String) {
 		// CodeUnit dimensions
 		val WIDTH = 32;
 	}
-
+	
+	private var parsed: Tree.Do? = null; // original AST
 	var events: Map<String, Tree> = mapOf(); // events
 	var functions: Map<String, CFunction> = mapOf(); // functions
 	var globals: MutableMap<String, Var> = mutableMapOf(); // stores global variables. all variables inside should have scope 0
@@ -42,21 +43,46 @@ class CodeUnit(val location: Location, val name: String, val owner: String) {
 				throw ParseException(tree.loc, "Invalid tree.");
 			var eventsMap = mutableMapOf<String, Tree>();
 			var functionsMap = mutableMapOf<String, CFunction>();
-			for(t in tree.children) {
+			var imported = mutableSetOf(name);
+			fun add(t: Tree) {
 				when(t) {
 					is Tree.Event -> {
+						if(eventsMap.containsKey(t.name))
+							throw ParseException(t.loc, "Event ${t.name} already declared.");
 						eventsMap[t.name] = t;
 					}
 					is Tree.Declare -> {
+						if(globals.containsKey(t.name))
+							throw ParseException(t.loc, "Global variable ${t.name} already declared.");
 						var exec = Executor(0u, ExecutorContext(this, null, 100), globals)
 						exec.eval(t);
 					}
 					is Tree.Function -> {
+						if(functionsMap.containsKey(t.name))
+							throw ParseException(t.loc, "Function ${t.name} already declared.");
 						functionsMap[t.name] = t.fn;
 					}
-					else -> throw ParseException(t.loc, "Non-event at top level.")
+					is Tree.Token -> {
+						val tk = t.token;
+						if(tk !is Token.Import)
+							throw ParseException(t.loc, "Unexpected ${tk.name()} at top-level.")
+						val other = tk.name;
+						if(other in imported)
+							throw ParseException(t.loc, "Circular import detected.");
+						imported.add(other);
+						if(!Data.codeUnits.containsKey(other))
+							throw ParseException(t.loc, "Unknown unit '${tk.name}'");
+						val children = Data.codeUnits[other]!!.parsed?.children;
+						if(children != null)
+							for(t2 in children)
+								add(t2);
+					}
+					else -> throw ParseException(t.loc, "Unexpected ${t.name()} at top-level.")
 				}
 			}
+			for(t in tree.children)
+				add(t);
+			parsed = tree;
 			events = eventsMap;
 			functions = functionsMap;
 			handleEvent(CInitEvent());
