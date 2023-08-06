@@ -95,7 +95,6 @@ object Utils {
 								append(ct.translate('7'));
 								append("... ");
 								append(ct.translate('f'));
-								break;
 							}
 							'\\' -> append('\\')
 							'\u0000' -> append('\\')
