@@ -184,31 +184,23 @@ object Utils {
 	/** Tries to convert an object to an int.
 	 * {@throws ClassCastException on failure}
 	 */
-	@JvmStatic fun asInt(o: Any?): Int {
-		if(o is java.lang.Integer)
-			return o as Int;
-		else if(o is java.lang.Long)
-			return ((o as java.lang.Long)).toInt();
-		else if(o is java.lang.Double)
-			return ((o as java.lang.Double)).toInt();
-		else if(o is java.lang.Float)
-			return ((o as java.lang.Float)).toInt();
-		throw ClassCastException();
+	@JvmStatic fun asInt(o: Any?): Int = when(o) {
+		is Int -> o
+		is Long -> o.toInt()
+		is Double -> o.toInt()
+		is Float -> o.toInt()
+		else -> throw ClassCastException()
 	}
 	
 	/** Tries to convert an object to a float.
 	 * {@throws ClassCastException on failure}
 	 */
-	@JvmStatic fun asFloat(o: Any?): Float {
-		if(o is java.lang.Integer)
-			return (o as Int).toFloat();
-		else if(o is java.lang.Long)
-			return ((o as java.lang.Long)).toFloat();
-		else if(o is java.lang.Double)
-			return ((o as java.lang.Double)).toFloat();
-		else if(o is java.lang.Float)
-			return ((o as java.lang.Float)).toFloat();
-		throw ClassCastException();
+	@JvmStatic fun asFloat(o: Any?): Float = when(o) {
+		is Int -> o.toFloat()
+		is Long -> o.toFloat()
+		is Double -> o.toFloat()
+		is Float -> o
+		else -> throw ClassCastException();
 	}
 
 	/** Gets all players in a given channel */
@@ -379,5 +371,5 @@ object Utils {
 	);
 
 	/** Gets the width of a character */
-	@JvmStatic fun charWidth(c: Char) = if(c < 32 as Char || c > 126 as Char) 8 else charWidths[(c as Int)-32]
+	@JvmStatic fun charWidth(c: Char) = if(c < 32.toChar() || c > 126.toChar()) 8 else charWidths[c.code-32]
 }
