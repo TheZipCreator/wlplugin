@@ -50,7 +50,7 @@ public class PlotCommand implements CommandExecutor {
       }
       case "w":
       case "wild": {
-        int[] plots;
+        Integer[] plots;
         if(args.length == 1)
           plots = Utils.plotsOwnedBy(p);
         else {

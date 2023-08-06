@@ -41,7 +41,6 @@ public class WlPlugin extends JavaPlugin {
 		// create random
 		rand = new Random();
 		Data.onEnable();
-		Utils.init();
 		modules = new ArrayList<Module>();
 		modules.add(new ChatModule());
 		modules.add(new PlotModule());

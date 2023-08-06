@@ -1,7 +1,7 @@
 package net.mcwarlords.wlplugin.game;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Date;
 
 import org.bukkit.Bukkit;
@@ -90,7 +90,7 @@ public class GameCommand implements CommandExecutor {
 			}
 			case "l":
 			case "list": {
-				ArrayList<String> list = Utils.getSortedGames();
+				List<String> list = Utils.getSortedGames();
 				StringBuilder sb = new StringBuilder("&_sList of all &_e"+Integer.toString(list.size())+"&_s games:\n&_d");
 				for(int i = 0; i < list.size(); i++) {
 					if(i != 0)
