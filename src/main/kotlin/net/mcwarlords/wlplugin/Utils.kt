@@ -32,7 +32,7 @@ object Utils {
 				if(pd.inputCB == null)
 					return;
 				e.setCancelled(true);
-				Bukkit.getScheduler().runTask(WlPlugin.instance, Runnable {
+				Bukkit.getScheduler().runTask(WlPlugin.instance!!, Runnable {
 					// might remove the escape text later, idk
 					var msg = e.message;
 					if(msg.length >= 1 && msg[0] == '\\')
@@ -120,7 +120,7 @@ object Utils {
 				'p' -> WlPlugin.prefixCol
 				'd' -> WlPlugin.defaultCol
 				'e' -> WlPlugin.errorCol
-				's' -> WlPlugin.seperatorCol
+				's' -> WlPlugin.separatorCol
 				else -> "0"
 			}
 			override fun translateHex(color: String) = ChatColor.of('#'+color).toString();
@@ -219,7 +219,7 @@ object Utils {
 	@JvmStatic fun plotsOwnedBy(p: Player) = plotsOwnedBy(getUUID(p));
 	@JvmStatic fun plotsOwnedBy(uuid: String) = (0..<Data.plotOwners.size).filter { Data.plotOwners[it] == uuid }.toTypedArray();
 	/** Gets a uniform random number between two integers */
-	@JvmStatic fun randInt(min: Int, max: Int) = WlPlugin.rand.nextInt(max-min) + min;
+	@JvmStatic fun randInt(min: Int, max: Int) = WlPlugin.rand!!.nextInt(max-min) + min;
 
 	/** Gets a plot id at a given coordinate */
 	@JvmStatic fun getPlotAt(x: Int, z: Int): Int {

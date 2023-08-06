@@ -65,7 +65,7 @@ internal object runTask {
 }
 
 internal fun runTaskAsync(task: () -> Unit) {
-	Bukkit.getScheduler().runTaskAsynchronously(WlPlugin.instance, task);
+	Bukkit.getScheduler().runTaskAsynchronously(WlPlugin.instance!!, task);
 }
 
 // takes something that calls the bukkit API and waits for a response

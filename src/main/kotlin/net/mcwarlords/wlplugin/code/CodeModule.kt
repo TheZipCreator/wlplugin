@@ -34,7 +34,7 @@ class CodeModule : Module {
 				WlPlugin.warn(Utils.escapeText("Failed to build unit $name: ${e.toChatString()}"));
 			}
 		}
-		Bukkit.getScheduler().runTaskTimer(WlPlugin.instance, Runnable {
+		Bukkit.getScheduler().runTaskTimer(WlPlugin.instance!!, Runnable {
 			runTask.update();
 			for(u in Data.codeUnits.values)
 				u.update();
@@ -44,7 +44,7 @@ class CodeModule : Module {
 	}
 
 	override fun onDisable() {
-		for(p in WlPlugin.instance.server.onlinePlayers) {
+		for(p in WlPlugin.instance!!.server.onlinePlayers) {
 			var pd = Data.getPlayerData(p);
 			if(pd.codeMode)
 				toggleCodeMode(p);

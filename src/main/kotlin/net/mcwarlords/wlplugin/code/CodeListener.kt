@@ -44,7 +44,7 @@ object CodeListener : Listener {
 		sign.update(true);
 		// update the sign again later.
 		// I believe I have to do this because the client doesn't realize it's a sign immediately?
-		Bukkit.getScheduler().runTaskLater(WlPlugin.instance, Runnable {
+		Bukkit.getScheduler().runTaskLater(WlPlugin.instance!!, Runnable {
 			sign.update(true);
 		}, 5);
 	}
