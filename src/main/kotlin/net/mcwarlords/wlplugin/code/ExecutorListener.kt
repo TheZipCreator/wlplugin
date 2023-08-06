@@ -37,9 +37,8 @@ object ExecutorListener : Listener {
 	@EventHandler fun onPlayerInteract(e: PlayerInteractEvent) {
 		when(e.action) {
 			Action.LEFT_CLICK_BLOCK, Action.LEFT_CLICK_AIR -> CLeftClickEvent(e).execute()
-			Action.RIGHT_CLICK_BLOCK, Action.RIGHT_CLICK_AIR -> 
-				if(e.hand == EquipmentSlot.HAND && !(e.useInteractedBlock() == Event.Result.DENY && e.player.getTargetBlock(null, 5).type != Material.AIR)) 
-					CRightClickEvent(e).execute()	
+			Action.RIGHT_CLICK_BLOCK -> if(e.hand == EquipmentSlot.HAND && e.useInteractedBlock() != Event.Result.DENY) CRightClickEvent(e).execute()
+			Action.RIGHT_CLICK_AIR -> CRightClickEvent(e).execute()
 			else -> {}
 		}
 	}

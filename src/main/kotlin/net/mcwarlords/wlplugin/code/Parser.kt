@@ -23,7 +23,7 @@ sealed class Tree(val loc: Location) {
 	class Do(l: Location, val children: KList<Tree>) : Tree(l);
 	class Event(l: Location, val name: String, val children: KList<Tree>) : Tree(l);
 	class If(l: Location, val conds: KList<Tree>, val actions: KList<Tree>, val failure: Tree?) : Tree(l);
-	class For(l: Location, val key: String?, val value: String?, val list: Tree, val body: KList<Tree>) : Tree(l);
+	class For(l: Location, val varName: String, val list: Tree, val body: KList<Tree>) : Tree(l);
 	class Builtin(l: Location, val name: String, val args: KList<Tree>) : Tree(l);
 	class Token(l: Location, val token: net.mcwarlords.wlplugin.code.Token) : Tree(l);
 	class List(l: Location, val list: KList<Tree>) : Tree(l);
