@@ -61,3 +61,4 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 - wlplot: Action bar no longer displays while holding debug stick
 - wlcode: Added many new item, enum, and string builtins.
 - wlcode: Fixed bug where parser would ignore the last column of code.
+- wldiscord: Added hex code support (it will try to find the nearest existing color to a hex color)
