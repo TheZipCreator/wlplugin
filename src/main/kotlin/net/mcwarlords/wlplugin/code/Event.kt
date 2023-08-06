@@ -90,7 +90,7 @@ abstract class CClickEvent(private val impl: PlayerInteractEvent, override val n
 		get() = impl.isCancelled()
 		set(b) = impl.setCancelled(b);
 	override val player = impl.player;
-	override val location = impl.clickedBlock?.location ?: impl.player.getTargetBlock(null, 20).location;
+	override val location = impl.clickedBlock?.location ?: impl.player.getTargetBlock(null, 5).location;
 	override val item = impl.item;
 }
 

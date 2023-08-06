@@ -1,8 +1,10 @@
 package net.mcwarlords.wlplugin.code;
 
 import org.bukkit.entity.*;
+import org.bukkit.entity.Damageable;
 import org.bukkit.*;
 import org.bukkit.inventory.*;
+import org.bukkit.inventory.meta.*;
 import org.bukkit.projectiles.*;
 import org.bukkit.potion.*
 import org.bukkit.util.*;
@@ -10,6 +12,8 @@ import kotlin.math.*;
 import kotlin.random.*;
 import java.util.concurrent.atomic.*;
 import java.util.concurrent.*;
+import org.apache.commons.text.WordUtils;
+
 
 import java.util.UUID;
 
@@ -211,6 +215,18 @@ private fun potionTypeFromValue(loc: Location, v: Value): PotionEffectType =
 	PotionEffectType.getByName(v.toString().uppercase().replace('-', '_')) ?: throw ExecutionException(loc, "Invalid potion effect type '$v'");
 
 
+private fun itemBuiltin(name: String, argc: Int, fn: (loc: Location, item: ItemStack, meta: ItemMeta, args: List<Value>) -> Value?): Builtin {
+	return fn@ { _, loc, args ->
+		argsEqual(loc, args, name, argc);
+		val item = args[0].getItem(loc);
+		var meta = item.itemMeta!!;
+		val ret = fn(loc, item, meta, args);
+		if(ret != null)
+			return@fn ret;
+		item.itemMeta = meta;
+		Value.Item(item)
+	};
+}
 
 internal val builtins = mapOf<String, Builtin>(
 	// player actions
@@ -523,6 +539,11 @@ internal val builtins = mapOf<String, Builtin>(
 			throw ExecutionException(loc, "End is out of bounds.");
 		Value.List(list.subList(start, end));
 	},
+	"list-has" to { _, loc, args ->
+		argsEqual(loc, args, "list-has", 2);
+		val list = args[0].getList(loc);
+		Value.Bool(args[1] in list)
+	},
 	// map operations
 	// get a map value
 	"map-get" to { _, loc, args ->
@@ -554,7 +575,7 @@ internal val builtins = mapOf<String, Builtin>(
 		map.remove(key);
 		Value.Unit
 	},
-	// strings
+	// string
 	"string-cat" to { _, _, args ->
 		Value.String(buildString {
 			for(v in args)
@@ -577,6 +598,45 @@ internal val builtins = mapOf<String, Builtin>(
 		if(end < 0 || end > str.length)
 			throw ExecutionException(loc, "End is out of bounds.");
 		Value.String(str.substring(start, end));
+	},
+	"string-split" to { _, loc, args ->
+		argsEqual(loc, args, "string-split", 2);
+		Value.List(args[0].toString().split(args[1].toString()).map { Value.String(it) }.toMutableList())
+	},
+	"string-capitalize" to { _, loc, args ->
+		argsEqual(loc, args, "string-capitalize", 1);
+		Value.String(WordUtils.capitalizeFully(args[0].toString()))
+	},
+	"string-chunked" to { _, loc, args ->
+		argsEqual(loc, args, "string-chunked", 2);
+		val size = args[1].getNum(loc).toInt();
+		if(size < 1)
+			throw CodeException(loc, "Size $size must be greater than 0.");
+		Value.List(args[0].toString().chunked(size).map { Value.String(it) }.toMutableList());
+	},
+	"string-ends-with" to { _, loc, args ->
+		argsEqual(loc, args, "string-ends-with", 2);
+		Value.Bool(args[0].toString().endsWith(args[1].toString()))
+	},
+	"string-starts-with" to { _, loc, args ->
+		argsEqual(loc, args, "string-starts-with", 2);
+		Value.Bool(args[0].toString().startsWith(args[1].toString()))
+	},
+	"string-replace" to { _, loc, args ->
+		argsEqual(loc, args, "string-replace", 3);
+		Value.String(args[0].toString().replace(args[1].toString(), args[2].toString()))
+	},
+	"string-reverse" to { _, loc, args ->
+		argsEqual(loc, args, "string-reverse", 1);
+		Value.String(args[0].toString().reversed())
+	},
+	"string-uppercase" to { _, loc, args ->
+		argsEqual(loc, args, "string-uppercase", 1);
+		Value.String(args[0].toString().uppercase());
+	},
+	"string-lowercase" to { _, loc, args ->
+		argsEqual(loc, args, "string-lowercase", 1);
+		Value.String(args[0].toString().lowercase());
 	},
 	// conversions
 	"to-string" to { _, loc, args ->
@@ -614,6 +674,38 @@ internal val builtins = mapOf<String, Builtin>(
 		argsEqual(loc, args, "get-block", 1);
 		val l = args[0].getLocation(loc);
 		Value.Item(ItemStack(bukkitCall { l.world?.getBlockAt(l)?.type ?: Material.AIR }, 1));
+	},
+	// items
+	"item-name" to itemBuiltin("item-name", 1) { _, item, meta, _ -> Value.String(
+		if(meta.hasDisplayName()) meta.displayName 
+		else WordUtils.capitalizeFully(item.type.name.replace("_", " "))) 
+	},
+	"item-set-name" to itemBuiltin("item-set-name", 2) { _, _, meta, args -> meta.setDisplayName(args[1].toString()); null },
+	"item-clone" to itemBuiltin("item-clone", 1) { _, item, _, _ -> Value.Item(item.clone()) },
+	"item-lore" to itemBuiltin("item-lore", 1) { _, _, meta, _ -> Value.List(if(meta.hasLore()) meta.getLore()!!.map { Value.String(it) }.toMutableList() else mutableListOf()) },
+	"item-set-lore" to itemBuiltin("item-set-lore", 2) { loc, _, meta, args -> meta.lore = args[1].getList(loc).map { it.toString() }; null },
+	"item-material" to itemBuiltin("item-material", 1) { _, item, _, _ -> Value.String(item.type.lispCase()) },
+	"item-set-material" to itemBuiltin("item-set-material", 2) { loc, item, _, args -> item.type = args[1].toEnum<Material>(loc); null },
+	// enum
+	"entity-type?" to { _, loc, args ->
+		argsEqual(loc, args, "entity-type?", 1);
+		Value.Bool(try { args[0].toEnum<EntityType>(loc); true } catch(e: CodeException) { false })
+	},
+	"game-mode?" to { _, loc, args ->
+		argsEqual(loc, args, "game-mode?", 1);
+		Value.Bool(try { args[0].toEnum<GameMode>(loc); true } catch(e: CodeException) { false })
+	},
+	"potion-effect?" to { _, loc, args ->
+		argsEqual(loc, args, "potion-effect?", 1);
+		Value.Bool(try { potionTypeFromValue(loc, args[0]); true } catch(e: CodeException) { false })
+	},
+	"sound?" to { _, loc, args ->
+		argsEqual(loc, args, "sound?", 1);
+		Value.Bool(try { args[0].toEnum<Sound>(loc); true } catch(e: CodeException) { false })
+	},
+	"material?" to { _, loc, args ->
+		argsEqual(loc, args, "material?", 1);
+		Value.Bool(try { args[0].toEnum<Material>(loc); true } catch(e: CodeException) { false })
 	},
 	// misc
 	// logs to the unit's log
