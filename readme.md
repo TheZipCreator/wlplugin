@@ -64,5 +64,7 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 - wldiscord: Added hex code support (it will try to find the nearest existing color to a hex colors)
 ## 1.7.3
 - Updated to 1.20.1
-- Fixed bug where text after a newline would get cut off
-- wlcode: Added `import`
+- wlchat: Fixed bug where text after a newline would get cut off
+- wlcode: Added `import` block
+- wlcode: Fixed a bug with `list-has` where it would always return false.
+- wlcode: Added `run-command`, `entity-get-armor`, and `entity-set-armor`

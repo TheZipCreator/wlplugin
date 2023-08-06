@@ -371,7 +371,8 @@ class Executor(val scope: UInt, val ctx: ExecutorContext, var vartable: MutableM
 				log(e.toChatString());
 			} catch(e: Exception) {
 				ctx.stopped = true;
-				log("&c${e.message}");
+				log("&c$e");
+				e.printStackTrace();
 			}
 		}
 		if(sync)

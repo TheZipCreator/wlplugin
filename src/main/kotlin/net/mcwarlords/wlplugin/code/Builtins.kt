@@ -8,6 +8,7 @@ import org.bukkit.inventory.meta.*;
 import org.bukkit.projectiles.*;
 import org.bukkit.potion.*
 import org.bukkit.util.*;
+import org.bukkit.command.CommandException;
 import kotlin.math.*;
 import kotlin.random.*;
 import java.util.concurrent.atomic.*;
@@ -423,6 +424,32 @@ internal val builtins = mapOf<String, Builtin>(
 			runTask { entity.remove() }
 		Value.Unit
 	},
+	"entity-get-armor" to fn@ { _, loc, args ->
+		argsEqual(loc, args, "entity-get-armor", 1);
+		val entity = args[0].getEntity(loc);
+		if(entity !is LivingEntity)
+			throw CodeException(loc, "Can not get armor from entity of type '${entity.type.lispCase()}'.");
+		val eq = entity.equipment;
+		if(eq == null)
+			return@fn Value.List(MutableList(4) { Value.Item(ItemStack(Material.AIR)) });
+		Value.List(eq.armorContents.map { Value.Item(it) }.toMutableList())
+	},
+	"entity-set-armor" to { _, loc, args ->
+		argsEqual(loc, args, "entity-set-armor", 2);
+		val entity = args[0].getEntity(loc);
+		if(entity !is LivingEntity)
+			throw CodeException(loc, "Can not set armor to entity of type '${entity.type.lispCase()}'.");
+		var armor = args[1].getList(loc);
+		if(armor.size != 4)
+			throw CodeException(loc, "Armor list must be of size 4");
+		if(armor.any { it !is Value.Item })
+			throw CodeException(loc, "All elements of armor list must be items.");
+		val armorContents = armor.map { ItemStack((it as Value.Item).item) }.toTypedArray();
+		runTask {
+			entity.equipment?.armorContents = armorContents;
+		}
+		Value.Unit
+	},
 	// operators
 	"+" to operation("+", {a, b -> a+b}),
 	"-" to operation("-", {a, b -> a-b}),
@@ -539,10 +566,14 @@ internal val builtins = mapOf<String, Builtin>(
 			throw ExecutionException(loc, "End is out of bounds.");
 		Value.List(list.subList(start, end));
 	},
-	"list-has" to { _, loc, args ->
+	"list-has" to fn@ { _, loc, args ->
 		argsEqual(loc, args, "list-has", 2);
 		val list = args[0].getList(loc);
-		Value.Bool(args[1] in list)
+		val item = args[1];
+		for(v in list)
+			if(v == item)
+				return@fn Value.Bool(true);
+		Value.Bool(false)
 	},
 	// map operations
 	// get a map value
@@ -771,5 +802,27 @@ internal val builtins = mapOf<String, Builtin>(
 			runTask { player.playSound(l, sound, volume, pitch) }
 		}
 		Value.Unit
+	},
+	"run-command" to { exec, loc, args ->
+		argsEqual(loc, args, "run-command", 1);
+		val cmd = args[0].toString();
+		val name = exec.ctx.unit.name;
+		val split = cmd.split(" ");
+		if(split.size > 0) {
+			var c = split[0];
+			if(c.contains(":"))
+				c = c.substring(c.indexOf(':')+1);
+			if(c in forbiddenCommands)
+				throw CodeException(loc, "Command '$cmd' is forbidden.");
+		}
+		runTask {
+			try {
+				WlPlugin.info("Code unit '$name' issued server command: /$cmd");
+				Bukkit.dispatchCommand(Bukkit.getServer().consoleSender, cmd);
+			} catch(e: CommandException) {}
+		}
+		Value.Unit
 	}
 );
+
+val forbiddenCommands = listOf("stop", "restart", "reload", "nuke", "antioch");
