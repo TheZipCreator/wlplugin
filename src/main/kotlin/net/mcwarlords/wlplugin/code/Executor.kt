@@ -162,7 +162,7 @@ class CFunction(val args: List<String>, val body: Tree) {
 	fun call(ctx: ExecutorContext, params: List<Value>): Value {
 		var vars = ctx.unit.globals.toMutableMap();
 		for(i in args.indices) {
-			vars[args[i]] = Var(1u, if(i < args.size) params[i] else Value.Unit);
+			vars[args[i]] = Var(1u, if(i < params.size) params[i] else Value.Unit);
 		}
 		var exec = Executor(1u, ctx, vars);
 		try {
