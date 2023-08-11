@@ -68,3 +68,5 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 - wlcode: Added `import` block
 - wlcode: Fixed a bug with `list-has` where it would always return false.
 - wlcode: Added `run-command`, `entity-get-armor`, and `entity-set-armor`
+## 1.7.4
+- wlcode: Fixed bug where, upon server startup, code units' dependencies would not be built before them.

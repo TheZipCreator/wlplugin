@@ -72,7 +72,9 @@ class CodeUnit(val location: Location, val name: String, val owner: String) {
 						imported.add(other);
 						if(!Data.codeUnits.containsKey(other))
 							throw ParseException(t.loc, "Unknown unit '${tk.name}'");
-						val children = Data.codeUnits[other]!!.parsed?.children;
+						val cu = Data.codeUnits[other]!!;
+						cu.build();
+						val children = cu.parsed?.children;
 						if(children != null)
 							for(t2 in children)
 								add(t2);
