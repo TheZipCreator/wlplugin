@@ -24,7 +24,7 @@ import org.bukkit.event.*;
 
 class WlPlugin : JavaPlugin() {
 	companion object {
-		@JvmField val VERSION = "1.7.3";
+		@JvmField val VERSION = "1.7.4";
 		@JvmField var instance: WlPlugin? = null;
 		@JvmField var rand: Random? = null;
 		val prefixCol = '4';
