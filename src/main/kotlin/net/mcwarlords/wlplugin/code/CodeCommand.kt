@@ -175,8 +175,15 @@ object CodeCommand : CommandExecutor {
 					if(u.executors.size == 0)
 						continue;
 					p.sendMessage(Utils.escapeText("&_e${u.name}:"));
-					for(e in u.executors)
+					var amt = 0;
+					for(e in u.executors) {
+						amt += 1;
+						if(amt > 10) {
+							p.sendMessage(Utils.escapeText("&_p* &_d... ${u.executors.size-amt} more threads."));
+							break;
+						}
 						p.sendMessage(Utils.escapeText("&_p* &3[${formatInstant(e.ctx.startTime)}] &_d${e.ctx.event?.name ?: "unknown"}"));
+					}
 				}
 			}
 			else -> p.sendMessage(Utils.escapeText("&_p* &_dInvalid subcommand."))

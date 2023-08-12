@@ -111,7 +111,7 @@ class CodeUnit(val location: Location, val name: String, val owner: String) {
 		return;
 	}
 
-	val MAX_LOG_SIZE = 100; // maximum log size
+	val MAX_LOG_SIZE = 30; // maximum log size
 	
 	// log a value
 	fun log(s: Any) {

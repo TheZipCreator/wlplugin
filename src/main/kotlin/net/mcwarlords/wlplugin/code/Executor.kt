@@ -365,17 +365,15 @@ class Executor(val scope: UInt, val ctx: ExecutorContext, var vartable: MutableM
 			try {
 				eval(tree);
 			} catch(e: Return) {
-				ctx.stopped = true;
 				if(!returnExpected)
 					log(e.toChatString())
 			} catch(e: CodeException) {
-				ctx.stopped = true;
 				log(e.toChatString());
 			} catch(e: Exception) {
-				ctx.stopped = true;
 				log("&c$e");
 				e.printStackTrace();
 			}
+			ctx.stopped = true;
 		}
 		if(sync)
 			task();
