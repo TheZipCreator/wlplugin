@@ -151,15 +151,19 @@ object CodeListener : Listener {
 						}
 						editingItems[3] -> {
 							// remove space
-							val right = edge(block, BlockFace.NORTH);
-							val w = right.world;
-							for(x in right.x..right.x+1) {
-								for(z in block.z downTo right.z) {
-									copy(w.getBlockAt(x, block.y, z), w.getBlockAt(x, block.y, z-1));
+							// this is run in a task to prevent accidental double removal
+							runTask {
+								p.sendMessage("removed");
+								val right = edge(block, BlockFace.NORTH);
+								val w = right.world;
+								for(x in right.x..right.x+1) {
+									for(z in block.z downTo right.z) {
+										copy(w.getBlockAt(x, block.y, z), w.getBlockAt(x, block.y, z-1));
+									}
 								}
+								right.type = Material.BLACK_STAINED_GLASS;
+								right.getRelative(BlockFace.EAST).type = Material.AIR;
 							}
-							right.type = Material.BLACK_STAINED_GLASS;
-							right.getRelative(BlockFace.EAST).type = Material.AIR;
 						}
 						else -> {}
 					}
