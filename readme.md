@@ -69,4 +69,5 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 - wlcode: Fixed a bug with `list-has` where it would always return false.
 - wlcode: Added `run-command`, `entity-get-armor`, and `entity-set-armor`
 ## 1.7.4
-- wlcode: Fixed bug where, upon server startup, code units' dependencies would not be built before them.
+- wlcode: Upon server startup, code units' dependencies are now be built before them.
+- wlcode: When adding a line/space, barrel contents are now preserved.

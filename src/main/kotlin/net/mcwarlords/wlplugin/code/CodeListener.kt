@@ -8,6 +8,7 @@ import org.bukkit.block.data.type.*;
 import org.bukkit.block.data.*;
 import org.bukkit.block.sign.*;
 import org.bukkit.block.Sign;
+import org.bukkit.block.Barrel;
 import org.bukkit.*;
 import org.bukkit.inventory.*;
 
@@ -90,6 +91,11 @@ object CodeListener : Listener {
 							for(i in 0..3)
 								destFront.setLine(i, srcFront.getLine(i));
 							destState.update(true);
+						}
+						if(src.type == Material.BARREL) {
+							var srcState = src.state as Barrel;
+							var destState = dest.state as Barrel;
+							destState.inventory.contents = srcState.inventory.contents;
 						}
 					}
 					if(block.type == Material.OAK_WALL_SIGN)
