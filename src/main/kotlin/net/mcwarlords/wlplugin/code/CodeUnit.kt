@@ -25,7 +25,7 @@ class CodeUnit(val location: Location, val name: String, val owner: String) {
 	var functions: Map<String, CFunction> = mapOf(); // functions
 	var globals: MutableMap<String, Var> = mutableMapOf(); // stores global variables. all variables inside should have scope 0
 	var log: AtomicList<String> = AtomicList<String>(); // stores a log
-	private var executors: MutableList<Executor> = mutableListOf(); // stores all executors
+	var executors: MutableList<Executor> = mutableListOf(); // stores all executors
 
 	// converts to json
 	fun toJSON(): JSONObject {
@@ -58,7 +58,7 @@ class CodeUnit(val location: Location, val name: String, val owner: String) {
 					is Tree.Declare -> {
 						if(globals.containsKey(t.name))
 							throw ParseException(t.loc, "Global variable ${t.name} already declared.");
-						var exec = Executor(0u, ExecutorContext(this, null, 100), globals)
+						var exec = Executor(0u, ExecutorContext(this, null, Instant.now(), 100), globals)
 						exec.eval(t);
 					}
 					is Tree.Function -> {
@@ -105,7 +105,7 @@ class CodeUnit(val location: Location, val name: String, val owner: String) {
 	fun handleEvent(e: CEvent, sync: Boolean = e is CCancellable) {
 		if(!events.containsKey(e.name))
 			return;
-		var exec = Executor(1u, ExecutorContext(this, e, if(sync) 10000 else -1), globals);
+		var exec = Executor(1u, ExecutorContext(this, e, Instant.now(), if(sync) 10000 else -1), globals);
 		exec.run(events[e.name]!!, true, sync);
 		executors.add(exec);
 		return;
@@ -115,7 +115,7 @@ class CodeUnit(val location: Location, val name: String, val owner: String) {
 	
 	// log a value
 	fun log(s: Any) {
-		log.add("&3[${LocalTime.ofInstant(Instant.now(), ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("HH:mm:ss"))}]&r $s");
+		log.add("&3[${formatInstant(Instant.now())}]&r $s");
 		if(log.size > MAX_LOG_SIZE)
 			log.removeAt(0);
 	}

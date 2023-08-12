@@ -14,6 +14,8 @@ import org.json.simple.*;
 
 import kotlin.reflect.*;
 
+import java.time.*;
+
 import net.mcwarlords.wlplugin.*;
 
 class SerializationException(msg: String) : Exception(msg);
@@ -175,7 +177,7 @@ class CFunction(val args: List<String>, val body: Tree) {
 
 // context for interpreting - shared between an executor and all its children
 // operationsLeft is an operation limit - an error is thrown if it exceeds this. Set to -1 to disable
-class ExecutorContext(val unit: CodeUnit, val event: CEvent?, var operationsLeft: Int = -1) {
+class ExecutorContext(val unit: CodeUnit, val event: CEvent?, val startTime: Instant, var operationsLeft: Int = -1) {
 	private var _stopped: AtomicReference<Boolean> = AtomicReference(false);
 	var stopped
 		get() = _stopped.`get`()

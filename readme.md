@@ -76,3 +76,7 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 * wlcode: Building a unit now clears logs
 * wlcode: Fixed `java.lang.ConcurrentModificationException` that sometimes occurred when logging.
 * wlcode: Added `channel-broadcast` builtin.
+* wlcode: Added `/wlcode threads` to view active threads.
+* wldiscord: Attachments in #chat-mirror now send a link in minecraft chat.
+* wldiscord: Text formatting has been fixed. (Channels appear as #\<name> instead of using the discord ID, likewise for pings)
+* wldiscord: Switched from username#discrimnator to @username

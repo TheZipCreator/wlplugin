@@ -13,6 +13,8 @@ import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.mcwarlords.wlplugin.*;
 
+import java.util.*;
+
 public class Listener extends ListenerAdapter {
   @Override public void onReady(ReadyEvent e) {
     DiscordModule.message("&awldiscord enabled");
@@ -25,7 +27,7 @@ public class Listener extends ListenerAdapter {
         if(!pd.hideGlobal && !pd.discordIgnored.contains(sender))
           p.sendMessage(Utils.escapeText(message));
       }
-      WlPlugin.info("[CHAT] "+Utils.escapeText(message));
+      WlPlugin.info("[CHAT] "+Utils.escapeTextAnsi(message));
       return;
     }
     for(Player p : Bukkit.getOnlinePlayers()) {
@@ -40,7 +42,13 @@ public class Listener extends ListenerAdapter {
       User u = e.getAuthor();
       if(u.isBot())
         return;
-      sendMessage(u.getAsTag(), "global", "&9discord &_s| &_e"+u.getName()+"&_p#"+u.getDiscriminator()+"&f: "+e.getMessage().getContentRaw());
+			var msg = e.getMessage();
+
+			var sb = new StringBuilder();
+			sb.append(msg.getContentDisplay());
+			for(var a : msg.getAttachments())
+				sb.append(" &_p[&_e"+a.getUrl()+"&_p]");
+      sendMessage(u.getAsTag(), "global", "&9discord &_s| &_p@&_e"+u.getName()+"&f: "+sb.toString());
     }
   }
 

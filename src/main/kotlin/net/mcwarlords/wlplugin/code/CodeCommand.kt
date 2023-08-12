@@ -4,6 +4,9 @@ import org.bukkit.command.*;
 import org.bukkit.entity.*;
 import org.bukkit.*;
 
+import java.time.*;
+import java.time.format.*;
+
 import net.mcwarlords.wlplugin.*;
 
 object CodeCommand : CommandExecutor {
@@ -20,6 +23,7 @@ object CodeCommand : CommandExecutor {
 		p.sendMessage(Utils.escapeText("&_p/wlcode cc | cacheclear <name> &_s- &_dClears the cache of a unit and builds it without loading cache."));
 		p.sendMessage(Utils.escapeText("&_p/wlcode cv | cacheview <name> &_s- &_dViews the cache of a unit."));
 		p.sendMessage(Utils.escapeText("&_p/wlcode ha | halt <name> &_s- &_dHalts a unit."));
+		p.sendMessage(Utils.escapeText("&_p/wlcode t | threads [name] &_s- &_dViews all active threads. If [name] is specified, it views threads attached to that specific unit."));
     p.sendMessage(Utils.escapeText("&_p/wlcode m | mode &_s- &_dToggles code mode"));
 	}
 
@@ -132,6 +136,7 @@ object CodeCommand : CommandExecutor {
 			}
 			"l", "log" -> run {
 				val cu = getCodeUnit() ?: return@run;
+				p.sendMessage(Utils.escapeText("&_p* &_dLog:"));
 				for(msg in cu.log)
 					p.sendMessage(Utils.escapeText(msg));
 			}
@@ -158,6 +163,21 @@ object CodeCommand : CommandExecutor {
 					return@run;
 				}
 				p.sendMessage(Utils.escapeText("&_dYour currently subscribed units are: ${pd.subscribed.map { "&_e$it" }.joinToString("&_d, ")}&_d."));
+			}
+			"t", "threads" -> run {
+				var units = listOf<CodeUnit>();
+				if(args.size == 1)
+					units = Data.codeUnits.values.toMutableList();
+				else
+					units = listOf(getCodeUnit() ?: return@run);
+				p.sendMessage(Utils.escapeText("&_p* &_dActive threads:"));
+				for(u in units) {
+					if(u.executors.size == 0)
+						continue;
+					p.sendMessage(Utils.escapeText("&_e${u.name}:"));
+					for(e in u.executors)
+						p.sendMessage(Utils.escapeText("&_p* &3[${formatInstant(e.ctx.startTime)}] &_d${e.ctx.event?.name ?: "unknown"}"));
+				}
 			}
 			else -> p.sendMessage(Utils.escapeText("&_p* &_dInvalid subcommand."))
 		}

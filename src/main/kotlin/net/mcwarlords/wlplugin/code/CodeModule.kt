@@ -7,6 +7,9 @@ import org.bukkit.entity.*;
 import org.bukkit.inventory.*;
 import org.bukkit.*;
 
+import java.time.*;
+import java.time.format.*;
+
 class CodeModule : Module {
 	override fun onEnable() {
     WlPlugin.addCommand("wlcode", CodeCommand, object : TabCompleter {
@@ -123,3 +126,6 @@ internal fun toggleCodeMode(p: Player) {
 internal fun <T : Enum<T>> Enum<T>.lispCase(): String {
 	return this.name.lowercase().replace('_', '-');
 }
+
+// Formats an instant
+internal fun formatInstant(i: Instant) = LocalTime.ofInstant(i, ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("HH:mm:ss"))
