@@ -8,6 +8,9 @@ import org.bukkit.*;
 import org.bukkit.event.*;
 import org.bukkit.event.player.*;
 
+import java.time.*;
+import java.time.format.*;
+
 class CodeUnit(val location: Location, val name: String, val owner: String) {
 	companion object {
 		@JvmStatic fun fromJSON(name: String, o: JSONObject): CodeUnit {
@@ -21,7 +24,7 @@ class CodeUnit(val location: Location, val name: String, val owner: String) {
 	var events: Map<String, Tree> = mapOf(); // events
 	var functions: Map<String, CFunction> = mapOf(); // functions
 	var globals: MutableMap<String, Var> = mutableMapOf(); // stores global variables. all variables inside should have scope 0
-	var log: MutableList<String> = mutableListOf(); // stores a log
+	var log: AtomicList<String> = AtomicList<String>(); // stores a log
 	private var executors: MutableList<Executor> = mutableListOf(); // stores all executors
 
 	// converts to json
@@ -35,6 +38,7 @@ class CodeUnit(val location: Location, val name: String, val owner: String) {
 	// builds the unit
 	fun build(loadCache: Boolean = true) {
 		try {
+			log = AtomicList<String>();
 			if(loadCache)
 				handleEvent(CCacheEvent(), true);
 			var tree = Parser.parse(location.clone().add(1.0, 0.0, 0.0));
@@ -111,7 +115,7 @@ class CodeUnit(val location: Location, val name: String, val owner: String) {
 	
 	// log a value
 	fun log(s: Any) {
-		log.add(s.toString());
+		log.add("&3[${LocalTime.ofInstant(Instant.now(), ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("HH:mm:ss"))}]&r $s");
 		if(log.size > MAX_LOG_SIZE)
 			log.removeAt(0);
 	}

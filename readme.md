@@ -72,3 +72,6 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 - wlcode: Upon server startup, code units' dependencies are now be built before them.
 - wlcode: When adding a line/space, barrel contents are now preserved.
 - wlcode: Fixed 'Remove Space' removing more than one space under certain circumstances
+- wlcode: Added timestamps to logs
+- wlcode: Building a unit now clears logs
+- wlcode: Fixed `java.lang.ConcurrentModificationException` that sometimes occurred when logging.

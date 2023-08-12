@@ -40,13 +40,13 @@ private fun argsOneOf(loc: Location, args: List<Value>, name: String, vararg amo
 		throw ExecutionException(loc, "$name takes ${amounts.toList().subList(0, amounts.size-1).joinToString(", ")} or ${amounts[amounts.size-1]} arguments.");
 }
 
-private typealias SafeList<T> = CopyOnWriteArrayList<T>; // simpler name
+internal typealias AtomicList<T> = CopyOnWriteArrayList<T>; // simpler name
 
 // manages running tasks
 internal object runTask {
 	private val MAX_TASKS = 5000;
 	private val TASKS_PER_TICK = 100; // amount of tasks to execute per tick
-	var taskQueue = SafeList<() -> Unit>(); // queue of tasks (not sure if this is super thread safe but if it becomes a problem I'll replace it with something else). length never exceeds MAX_TASKS
+	var taskQueue = AtomicList<() -> Unit>(); // queue of tasks (not sure if this is super thread safe but if it becomes a problem I'll replace it with something else). length never exceeds MAX_TASKS
 	operator fun invoke(task: () -> Unit) {
 		// you're not *supposed to* use this to detect if something is running async, but there's no other way to detect it so idk
 		// it seems to work for now
