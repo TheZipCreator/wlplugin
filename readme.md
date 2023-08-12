@@ -75,3 +75,4 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 * wlcode: Added timestamps to logs
 * wlcode: Building a unit now clears logs
 * wlcode: Fixed `java.lang.ConcurrentModificationException` that sometimes occurred when logging.
+* wlcode: Added `channel-broadcast` builtin.

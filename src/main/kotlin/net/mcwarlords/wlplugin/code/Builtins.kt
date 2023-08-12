@@ -45,7 +45,7 @@ internal typealias AtomicList<T> = CopyOnWriteArrayList<T>; // simpler name
 // manages running tasks
 internal object runTask {
 	private val MAX_TASKS = 5000;
-	private val TASKS_PER_TICK = 100; // amount of tasks to execute per tick
+	private val TASKS_PER_TICK = 50; // amount of tasks to execute per tick
 	var taskQueue = AtomicList<() -> Unit>(); // queue of tasks (not sure if this is super thread safe but if it becomes a problem I'll replace it with something else). length never exceeds MAX_TASKS
 	operator fun invoke(task: () -> Unit) {
 		// you're not *supposed to* use this to detect if something is running async, but there's no other way to detect it so idk
@@ -764,6 +764,11 @@ internal val builtins = mapOf<String, Builtin>(
 	// broadcasts a message
 	"broadcast" to { _, _, args ->
 		Utils.sendMessage("global", args.joinToString("").replace("§", "&"));
+		Value.Unit
+	},
+	"channel-broadcast" to { _, loc, args ->
+		argsAtLeast(loc, args, "channel-broadcast", 1);
+		Utils.sendMessage(args[0].toString(), args.subList(1, args.size).joinToString("").replace("§", "&"));
 		Value.Unit
 	},
 	"cache-set" to { exec, loc, args ->
