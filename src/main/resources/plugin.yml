@@ -38,6 +38,11 @@ commands:
     usage: /<command> <subcommand> [args...]
     permission: wlplugin.wlmisc
     aliases: [wm, wlm]
+  # test commands
+  wltest:
+    description: test
+    usage: /<command> <subcommand> [args...]
+    aliases: [wt, wlt]
   # wlitem aliases
   rename:
     description: Renames an item. Equivalent to /wlitem rename

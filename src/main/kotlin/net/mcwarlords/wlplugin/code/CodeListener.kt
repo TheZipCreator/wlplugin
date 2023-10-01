@@ -247,7 +247,7 @@ object CodeListener : Listener {
 					}
 					CodeItem.EVENT -> makeInputSign("event", { it in validEvents})
 					CodeItem.FUNCTION -> makeInputSign("function")
-					CodeItem.IMPORT -> makeInputSign("import", { Data.codeUnits.containsKey(it) }, "unit")
+					CodeItem.IMPORT -> makeInputSign("import", { codeUnits.containsKey(it) }, "unit")
 					CodeItem.BUILTIN -> {
 						var bd = block.blockData as Directional;
 						bd.facing = BlockFace.EAST;

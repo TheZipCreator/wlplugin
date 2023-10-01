@@ -74,9 +74,9 @@ class CodeUnit(val location: Location, val name: String, val owner: String) {
 						if(other in imported)
 							throw ParseException(t.loc, "Circular import detected.");
 						imported.add(other);
-						if(!Data.codeUnits.containsKey(other))
+						if(!codeUnits.containsKey(other))
 							throw ParseException(t.loc, "Unknown unit '${tk.name}'");
-						val cu = Data.codeUnits[other]!!;
+						val cu = codeUnits[other]!!;
 						cu.build();
 						val children = cu.parsed?.children;
 						if(children != null)

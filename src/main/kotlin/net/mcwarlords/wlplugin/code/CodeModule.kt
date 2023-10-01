@@ -10,53 +10,70 @@ import org.bukkit.*;
 import java.time.*;
 import java.time.format.*;
 
-class CodeModule : Module {
-	override fun onEnable() {
-    WlPlugin.addCommand("wlcode", CodeCommand, object : TabCompleter {
-			override fun onTabComplete(sender: CommandSender, command: Command, label: String, args: Array<String>): MutableList<String> {
-					if(args.size == 1)
-						return mutableListOf(
-							"h", "help",
-							"n", "new",
-							"w", "warp",
-							"b", "build",
-							"m", "mode",
-							"d", "delete",
-							"l", "log"
-						);
-					return mutableListOf();
-				}	
-		});
+import org.json.simple.*;
+
+class CodeModule : SimpleModule {
+	override val name = "wlcode";
+	
+	object Field : ServerDataField {
+		val units: MutableMap<String, CodeUnit> = mutableMapOf(); /** Code units */
+		override val name = "codeUnits";
+
+		override fun load(obj: JSONObject) {
+			if(!obj.containsKey("codeUnits"))
+				return;
+			val jsonCodeUnits = obj["codeUnits"]!! as JSONObject;
+			jsonCodeUnits.forEach { k, v ->
+				val name = k as String;
+				units.put(name, CodeUnit.fromJSON(name, v as JSONObject));
+			}
+		}
+
+		override fun save(obj: JSONObject) {
+			val jsonCodeUnits = JSONObject();
+			for(s in units.keys)
+				jsonCodeUnits.put(s, units[s]!!.toJSON());
+			obj.put("codeUnits", jsonCodeUnits);
+		}
+	}
+
+	override fun registerFields() {
+		Data.register(Field);
+	}
+
+	override fun enabled() {
+		CodeCommand.register();
 		WlPlugin.addListener(CodeListener);
 		WlPlugin.addListener(ExecutorListener);
-		WlPlugin.info("wlcode: building units...");
-		for(name in Data.codeUnits.keys) {
+		WlPlugin.info("$name: building units...");
+		for(name in Field.units.keys) {
 			try {
-				Data.codeUnits[name]!!.build();
+				Field.units[name]!!.build();
 			} catch(e: CodeException) {
-				WlPlugin.warn(Utils.escapeText("Failed to build unit $name: ${e.toChatString()}"));
+				WlPlugin.warn(Utils.escapeTextAnsi("$name: Failed to build unit $name: ${e.toChatString()}"));
 			}
 		}
 		Bukkit.getScheduler().runTaskTimer(WlPlugin.instance!!, Runnable {
 			runTask.update();
-			for(u in Data.codeUnits.values)
+			for(u in Field.units.values)
 				u.update();
 			CLoopEvent().execute();
 		}, 20, 1);
-		WlPlugin.info("wlcode enabled");
 	}
 
-	override fun onDisable() {
+	override fun disabled() {
 		for(p in WlPlugin.instance!!.server.onlinePlayers) {
 			var pd = Data.getPlayerData(p);
 			if(pd.codeMode)
 				toggleCodeMode(p);
 		}
-		for(u in Data.codeUnits.values)
+		for(u in Field.units.values)
 			u.halt();
-		WlPlugin.info("wlcode disabled");
 	}
 }
+
+internal val codeUnits 
+	get() = CodeModule.Field.units;
 
 private fun mkItem(m: Material, name: String, vararg lore: String): ItemStack {
 	var i = ItemStack(m);

@@ -20,7 +20,7 @@ sealed interface CEvent {
 	val name: String;
 	// runs code for all modules
 	fun execute() {
-		for(u in Data.codeUnits.values)
+		for(u in codeUnits.values)
 			u.handleEvent(this);
 	}
 }
@@ -34,7 +34,7 @@ class CInitEvent() : CSimpleEvent("init");
 // note: this event is the only one that runs sychronously. do not do any large operations here.
 class CCacheEvent() : CSimpleEvent("cache") {
 	override fun execute() {
-		for(u in Data.codeUnits.values)
+		for(u in codeUnits.values)
 			u.handleEvent(this, true);
 	}
 }
@@ -53,9 +53,9 @@ interface CPlayerEvent : CEvent {
 	override fun execute() {
 		val pd = Data.getPlayerData(player);
 		for(unitName in pd.subscribed) {
-			if(!Data.codeUnits.containsKey(unitName))
+			if(!codeUnits.containsKey(unitName))
 				continue;
-			Data.codeUnits[unitName]!!.handleEvent(this);
+			codeUnits[unitName]!!.handleEvent(this);
 		}
 	}
 }

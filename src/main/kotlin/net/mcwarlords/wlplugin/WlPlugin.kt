@@ -1,6 +1,7 @@
 package net.mcwarlords.wlplugin;
 
 import org.bukkit.plugin.java.*;
+import org.bukkit.entity.*;
 import org.bukkit.scheduler.BukkitRunnable;
 
 
@@ -69,24 +70,35 @@ class WlPlugin : JavaPlugin() {
 		}
 	}	
 
-	var modules = mutableListOf<Module>();
+	var modules = mutableListOf<Module>(
+		ChatModule(), PlotModule(), GameModule(), SchemaModule(), DiscordModule(), CodeModule(), ItemModule(), MiscModule()
+	);
+	
+	object TestCommand : ModuleCommand {
+
+		override val name = "wltest";
+		override val clazz = TestCommand::class;
+
+		@SubCommand(["t", "thank"], "Says thank you to a player.") fun greet(@CommandPlayer p: Player, target: String, vararg reason: String) {
+			Utils.sendMessage("global", "${p.name} says: Thank you, $target${if(reason.size == 0) "" else " for ${reason.joinToString(" ")}"}!");
+		}
+	}
 
 	override fun onEnable() {
 		instance = this;
 		info("WlPlugin "+VERSION+" enabled");
 		// create random
 		rand = Random();
+		for(m in modules) {
+			if(m is SimpleModule) {
+				info("Registering fields for ${m.name}...");
+				m.registerFields();
+			}
+		}
 		Data.onEnable();
-		modules.add(ChatModule());
-		modules.add(PlotModule());
-		modules.add(GameModule());
-		modules.add(SchemaModule());
-		modules.add(DiscordModule());
-		modules.add(CodeModule());
-		modules.add(ItemModule());
-		modules.add(MiscModule());
 		for(m in modules)
 			m.onEnable();
+		TestCommand.register();
 		// add autosave every 30 min
 		object : BukkitRunnable() {
 			override fun run() {
