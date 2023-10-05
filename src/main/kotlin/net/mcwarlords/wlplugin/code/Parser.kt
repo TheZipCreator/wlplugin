@@ -274,12 +274,22 @@ class Parser(var loc: Location) {
 						if(inv.isEmpty()) {
 							return Token.Item(loc, ItemStack(Material.AIR));
 						}
+						val items = mutableListOf<ItemStack>();
 						for(i in 0..<inv.size) {
 							val item = inv.getItem(i);
 							if(item == null)
-								continue;
-							nextTokens.add(Token.Item(loc, item.clone()));
+								items.add(ItemStack(Material.AIR, 0));
+							else
+								items.add(item);
 						}
+						// cull ending air items
+						for(i in items.indices.reversed()) {
+							if(items[i].type != Material.AIR)
+								break;
+							items.removeAt(i);
+						}
+						for(i in items)
+							nextTokens.add(Token.Item(loc, i.clone()));
 						return next();
 					}
 					Material.TARGET -> {

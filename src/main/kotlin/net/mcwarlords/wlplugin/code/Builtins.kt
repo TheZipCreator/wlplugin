@@ -9,6 +9,7 @@ import org.bukkit.projectiles.*;
 import org.bukkit.potion.*
 import org.bukkit.util.*;
 import org.bukkit.command.CommandException;
+import org.bukkit.util.noise.*;
 import kotlin.math.*;
 import kotlin.random.*;
 import java.util.concurrent.atomic.*;
@@ -356,6 +357,24 @@ internal val builtins = mapOf<String, Builtin>(
 		argsEqual(loc, args, "flying?", 1)
 		Value.Bool(Data.getPlayerData(args[0].getPlayer(loc)).isFlying)
 	},
+	"selection" to { _, loc, args ->
+		argsEqual(loc, args, "selection", 1);
+		val pd = Data.getPlayerData(args[0].getPlayer(loc));
+		val ret = mutableListOf<Value>();
+		val locs = pd.selection;
+		if(locs[0].world != locs[1].world)
+			throw ExecutionException(loc, "Player's selection locations are in separate worlds!");
+		run {
+			val size = pd.selectionSize();
+			if(size[0]*size[1]*size[2] > 131072)
+				throw ExecutionException(loc, "Player's selection exceeds maximum size (131072)");
+		}
+		for(x in locs[0].block.x..locs[1].block.x)
+			for(y in locs[0].block.y..locs[1].block.y)
+				for(z in locs[0].block.z..locs[1].block.z)
+					ret.add(Value.Loc(Location(locs[0].world, x.toDouble(), y.toDouble(), z.toDouble())));
+		Value.List(ret)
+	},
 	// entity actions
 	// teleports an entity
 	"teleport" to { _, loc, args ->
@@ -497,6 +516,18 @@ internal val builtins = mapOf<String, Builtin>(
 		val amt = args[1].getNum(loc);
 		l.add(l.getDirection().multiply(amt));
 		Value.Loc(l);
+	},
+	"location-x" to { _, loc, args ->
+		argsEqual(loc, args, "location-x", 1);
+		Value.Number(args[0].getLocation(loc).x);
+	},
+	"location-y" to { _, loc, args ->
+		argsEqual(loc, args, "location-x", 1);
+		Value.Number(args[0].getLocation(loc).y);
+	},
+	"location-z" to { _, loc, args ->
+		argsEqual(loc, args, "location-x", 1);
+		Value.Number(args[0].getLocation(loc).z);
 	},
 	// list functions
 	// generates a range from a (inclusive) to b (exclusive)
@@ -827,6 +858,17 @@ internal val builtins = mapOf<String, Builtin>(
 			} catch(e: CommandException) {}
 		}
 		Value.Unit
+	},
+	// generate perlin noise
+	"perlin" to { _, loc, args ->
+		argsEqual(loc, args, "perlin", 6);
+		val x = args[0].getNum(loc);
+		val y = args[1].getNum(loc);
+		val z = args[2].getNum(loc);
+		val octaves = args[3].getNum(loc).toInt();
+		val frequency = args[4].getNum(loc);
+		val amplitude = args[5].getNum(loc);
+		Value.Number(PerlinNoiseGenerator.getNoise(x, y, z, octaves, frequency, amplitude));
 	}
 );
 

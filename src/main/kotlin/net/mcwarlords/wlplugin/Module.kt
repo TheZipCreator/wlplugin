@@ -47,7 +47,7 @@ interface ModuleCommand : CommandExecutor {
 	
 	private inline fun forEachSubcommand(cb: (SubCommand, KFunction<*>) -> Unit) {
 		// one liner!
-		// remove non-subcommand fucntions and sort alphabetically
+		// remove non-subcommand functions and sort alphabetically
 		val funcs = clazz.declaredFunctions.filter { it.findAnnotation<SubCommand>() != null }.sortedBy { it.findAnnotation<SubCommand>()!!.names.maxBy { it.length } };
 		for(func in funcs) {
 			val ann = func.findAnnotation<SubCommand>();

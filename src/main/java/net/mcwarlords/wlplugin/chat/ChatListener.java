@@ -17,6 +17,7 @@ public class ChatListener implements Listener {
 		DiscordModule.message(msg);
 		if(pd.nick != null)
 			p.setDisplayName(pd.nick);
+		pd.hideGlobal = false;
 	}
 
 	@EventHandler void onPlayerQuit(PlayerQuitEvent e) {
@@ -35,7 +36,7 @@ public class ChatListener implements Listener {
 			+" &8| &7"
 			+(pd.nick == null ? p.getName() : pd.nick)
 			+"&f: "+pd.prefix+msg;
-		Utils.sendMessage(p, channel, preFormat);
+		Utils.sendMessage(channel, preFormat, p);
 	}
 
 	@EventHandler void onPlayerChat(AsyncPlayerChatEvent e) {

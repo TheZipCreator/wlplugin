@@ -18,7 +18,7 @@ object CodeCommand : ModuleCommand {
 		try {
 			u.build(loadCache);
 			p.sendMessage(Utils.escapeText("&_p* &_dFinished building unit."));
-		} catch(e: ParseException) {
+		} catch(e: CodeException) {
 			p.sendMessage(Utils.escapeText("&_p* &_eError building unit: ${e.toChatString()}"));
 		}
 	}

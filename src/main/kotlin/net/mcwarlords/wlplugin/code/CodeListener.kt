@@ -153,7 +153,6 @@ object CodeListener : Listener {
 							// remove space
 							// this is run in a task to prevent accidental double removal
 							runTask {
-								p.sendMessage("removed");
 								val right = edge(block, BlockFace.NORTH);
 								val w = right.world;
 								for(x in right.x..right.x+1) {
@@ -319,5 +318,10 @@ object CodeListener : Listener {
 			}
 			else -> {}
 		}
+	}
+
+	@EventHandler fun onPlayerQuit(e: PlayerQuitEvent) {
+		if(Data.getPlayerData(e.player).codeMode)
+			toggleCodeMode(e.player);
 	}
 }

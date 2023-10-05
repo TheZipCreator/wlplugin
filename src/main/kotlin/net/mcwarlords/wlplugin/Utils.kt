@@ -54,7 +54,7 @@ object Utils {
 		fun translateHex(color: String): String
 	}
 	
-	private fun escapeTextImpl(txt: String, ct: ColorTranslator): String {
+	private fun escapeTextImpl(txt: String, defaultColor: String, ct: ColorTranslator): String {
 		return buildString {
 			var i = 0;
 			while(i < txt.length) {
@@ -76,11 +76,16 @@ object Utils {
 							'#' -> {
 								// hex colors
 								i += 2;
-								if(i+6 < txt.length) 
+								if(i+5 < txt.length) 
 									append(ct.translateHex(txt.substring(i, i+6)));
 								i += 5;
 							}
-							in '0'..'9', in 'A'..'Z', in 'a'..'z' -> {
+							'r' -> {
+								// default color
+								i += 1;
+								append(escapeTextImpl(defaultColor, "&f", ct));
+							}
+							in '0'..'9', in 'A'..'F', in 'a'..'z', in 'K'..'O', in 'k'..'o' -> {
 								append(ct.translate(b));
 								i += 1;
 							}
@@ -112,8 +117,8 @@ object Utils {
 	}
 	
 	/** Adds section symbols and stuff to text */
-	@JvmStatic fun escapeText(txt: String): String {
-		return escapeTextImpl(txt, object : ColorTranslator {
+	@JvmStatic @JvmOverloads fun escapeText(txt: String, defaultColor: String = "&f"): String {
+		return escapeTextImpl(txt, defaultColor, object : ColorTranslator {
 			override fun translate(color: Char) = "§"+color
 			override fun translateTheme(color: Char) = "§"+when(color) {
 				'p' -> WlPlugin.prefixCol
@@ -128,8 +133,8 @@ object Utils {
 
 	private data class Color(val code: String, val r: Int, val g: Int, val b: Int);
 	/** similar to escapeText, except it changes it to ANSII escape sequences */
-	@JvmStatic fun escapeTextAnsi(txt: String): String {
-		return escapeTextImpl(txt, object : ColorTranslator {
+	@JvmStatic @JvmOverloads fun escapeTextAnsi(txt: String, defaultColor: String = "&f"): String {
+		return escapeTextImpl(txt, defaultColor, object : ColorTranslator {
 			override fun translate(color: Char) = when(color) {
 				'0' -> "\u001B[0;30m"
 				'1' -> "\u001B[0;34m"
@@ -146,7 +151,7 @@ object Utils {
 				'c', 'C' -> "\u001B[0;31m"
 				'd', 'D' -> "\u001B[0;35m"
 				'e', 'E' -> "\u001B[0;33m"
-				'f', 'F', 'r', 'R' -> "\u001B[0;37m"
+				'f', 'F' -> "\u001B[0;37m"
 				// no equivalents to these
 				'k', 'K', 'l', 'L', 'm',  'M', 'n', 'N', 'o', 'O' -> ""
 				else -> "&"+color
@@ -159,6 +164,7 @@ object Utils {
 				else -> "&_"+color
 			}
 			val hexColors = listOf(
+				Color("30", 0, 0, 0),
 				Color("34", 38, 139, 210),
 				Color("32", 132, 152, 0),
 				Color("31", 220, 50, 47),
@@ -306,22 +312,23 @@ object Utils {
 
 	/** Sends a message to all people in a given channel */
 	@JvmStatic fun sendMessage(channel: String, message: String, sender: Player? = null) {
+		val default = if(sender == null) "&f" else Data.getPlayerData(sender).prefix;
 		if(channel.equals("global")) {
 			for(p in Bukkit.getOnlinePlayers()) {
 				val pd = Data.getPlayerData(p);
 				if(!pd.hideGlobal) {
 					if(sender == null || !pd.ignored.contains(getUUID(sender)))
-						p.sendMessage(escapeText(message));
+						p.sendMessage(escapeText(message, default));
 				}
 			}
 			DiscordModule.message(message);
-			WlPlugin.info("[CHAT] "+escapeTextAnsi(message));
+			WlPlugin.info("[CHAT] "+escapeTextAnsi(message, default));
 			return;
 		}
 		for(p in Bukkit.getOnlinePlayers()) {
 			val pd = Data.getPlayerData(p);
 			if(pd.channel == channel && (sender == null || !pd.ignored.contains(getUUID(sender))))
-				p.sendMessage(escapeText(message));
+				p.sendMessage(escapeText(message, default));
 		}
 	}
 	// for java compatibility

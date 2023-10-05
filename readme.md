@@ -81,3 +81,9 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 * wldiscord: Attachments in #chat-mirror now send a link in minecraft chat.
 * wldiscord: Text formatting has been fixed. (Channels appear as #\<name> instead of using the discord ID, likewise for pings)
 * wldiscord: Switched from username#discrimnator to @username
+## 1.7.5
+* Added ANSI gray to hex code color pallet.
+* wlchat: `&r` now gets replaced with your set chat prefix instead of always just defaulting to `&f`.
+* wlchat: Rejoining will automatically show global again
+* wlcode: Added `selection`, `perlin`, `location-x`, `location-y`, and `location-z` builtins
+* wlcode: Fixed unhandled exception when an invalid expression is placed in a global declare.
