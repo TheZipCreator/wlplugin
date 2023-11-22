@@ -48,7 +48,7 @@ public class Listener extends ListenerAdapter {
 			sb.append(msg.getContentDisplay());
 			for(var a : msg.getAttachments())
 				sb.append(" &_p[&_e"+a.getUrl()+"&_p]");
-      sendMessage(u.getAsTag(), "global", "&9discord &_s| &_p@&_e"+u.getName()+"&f: "+sb.toString());
+      sendMessage(u.getName(), "global", "&9discord &_s| &_p@&_e"+u.getName()+"&f: "+sb.toString());
     }
   }
 

@@ -37,7 +37,7 @@ object CodeCommand : ModuleCommand {
 		return cu;
 	}
 
-	@SubCommand(["n", "new"], "Creates a new unit with the given name. NOTE: make sure there's nothing near(32 blocks), because this may destroy it.") 
+	@SubCommand(["n", "new"], "Creates a new unit with the given name. NOTE: make sure there's nothing near (32 blocks), because this may destroy it.") 
 	fun new(@CommandPlayer p: Player, name: String) {
 		if(codeUnits.contains(name)) {
 			p.sendMessage(Utils.escapeText("&_p* &_eUnit $name already exists."));

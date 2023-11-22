@@ -37,7 +37,8 @@ interface SimpleModule : Module {
 
 }
 
-@Target(AnnotationTarget.FUNCTION) annotation class SubCommand(val names: Array<String>, val description: String);
+@Target(AnnotationTarget.FUNCTION) annotation class SubCommand(val names: Array<String>, val description: String)
+fun SubCommand.permission(name: String) = "wlplugin.$name.${names.maxBy { it.length }}";
 @Target(AnnotationTarget.VALUE_PARAMETER) annotation class CommandPlayer;
 @Target(AnnotationTarget.VALUE_PARAMETER) annotation class CommandName(val name: String);
 
@@ -99,6 +100,10 @@ interface ModuleCommand : CommandExecutor {
 		forEachSubcommand { ann, func ->
 			if(ann.names.firstOrNull { it == args[0] } == null)
 				return@forEachSubcommand;
+			if(!p.hasPermission(ann.permission(name))) {
+				p.sendMessage(Utils.escapeText("&_p* &_eYou do not have the required permission to run this command!"));
+				return false;
+			}
 			val map = mutableMapOf<KParameter, Any?>();
 			var i = 1;
 			fun takeArgument(type: KType): Any? {
@@ -141,14 +146,18 @@ interface ModuleCommand : CommandExecutor {
 					return true;
 				}
 				if(param.isVararg) {
-					val list = mutableListOf<Any?>();
+					val list = mutableListOf<Any>();
+					val subtype = param.type.arguments[0].type!!;
 					while(i < args.size) {
-						val a = takeArgument(param.type);
+						val a = takeArgument(subtype);
 						if(a == null)
 							return true;
 						list.add(a);
 					}
-					map[param] = list;
+					// reflection can be so ugly sometimes
+					val arr = java.lang.reflect.Array.newInstance((subtype.classifier as KClass<*>).java, list.size);
+					list.forEachIndexed { j, v -> java.lang.reflect.Array.set(arr, j, v) };
+					map[param] = arr;
 					continue;
 				}
 				val a = takeArgument(param.type);

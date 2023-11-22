@@ -224,3 +224,6 @@ object Data {
 	}
 
 }
+
+val Player.data
+	get() = Data.getPlayerData(this);

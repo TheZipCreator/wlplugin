@@ -133,8 +133,10 @@ internal fun toggleCodeMode(p: Player) {
 		p.inventory.addItem(editingItems[0]);
 		p.sendMessage(Utils.escapeText("&_p* &_dEntered code mode."));
 	} else {
-		p.inventory.contents = pd.prevInv;
-		pd.prevInv = null; // saves a bit of memory
+		if(pd.prevInv != null) {
+			p.inventory.contents = pd.prevInv!!;
+			pd.prevInv = null; // saves a bit of memory
+		}
 		p.sendMessage(Utils.escapeText("&_p* &_dExited code mode."));
 	}
 }

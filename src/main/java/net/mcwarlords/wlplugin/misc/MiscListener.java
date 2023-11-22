@@ -31,7 +31,7 @@ public class MiscListener implements Listener {
 		}
 		msg += " to &_e("+l.getX()+", "+l.getY()+", "+l.getZ()+")";
 		if(pd.hasSelection()) {
-			int[] size = pd.selectionSize();
+			Integer[] size = pd.selectionSize();
 			msg += " ["+size[0]+"×"+size[1]+"×"+size[2]+"]";
 		}
 		p.sendMessage(Utils.escapeText(msg));

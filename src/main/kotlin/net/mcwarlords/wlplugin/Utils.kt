@@ -29,7 +29,8 @@ object Utils {
 			@EventHandler(priority = EventPriority.LOWEST) 
 			fun onPlayerChat(e: AsyncPlayerChatEvent) {
 				var pd = Data.getPlayerData(e.player);
-				if(pd.inputCB == null)
+				val cb = pd.inputCB;
+				if(cb == null)
 					return;
 				e.setCancelled(true);
 				Bukkit.getScheduler().runTask(WlPlugin.instance!!, Runnable {
@@ -37,7 +38,7 @@ object Utils {
 					var msg = e.message;
 					if(msg.length >= 1 && msg[0] == '\\')
 						msg = msg.substring(1);
-					pd.inputCB.accept(Utils.escapeText(msg));
+					cb(Utils.escapeText(msg));
 					pd.inputCB = null;
 				});
 			}
@@ -363,14 +364,13 @@ object Utils {
 	}
 
 	/** Gets an input */
-	@JvmStatic fun getInput(p: Player, msg: String, callback: Consumer<String>) {
+	@JvmStatic fun getInput(p: Player, msg: String, callback: (String) -> Unit) {
 		p.sendMessage(escapeText(msg));
 		getInput(p, callback);
 	}
 	
-	@JvmStatic fun getInput(p: Player, callback: Consumer<String>) {
-		var pd = Data.getPlayerData(p);
-		pd.inputCB = callback;
+	@JvmStatic fun getInput(p: Player, callback: (String) -> Unit) {
+		p.data.inputCB = callback;
 	}
 	private val charWidths = listOf(
 			4,2,5,6,6,6,6,3,5,5,5,6,2,6,2,6,6,6,6,6,6,6,6,6,6,6,2,2,5,6,5,6,7,6,6,6,6,6,6,6,6,4,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,4,6,4,6,6,0,6,6,6,6,6,5,6,6,2,6,5,3,6,6,6,6,6,6,6,4,6,6,6,6,6,6,5,2,5,7
@@ -378,4 +378,8 @@ object Utils {
 
 	/** Gets the width of a character */
 	@JvmStatic fun charWidth(c: Char) = if(c < 32.toChar() || c > 126.toChar()) 8 else charWidths[c.code-32]
+}
+
+fun Player.sendEscaped(str: String) {
+	this.sendMessage(Utils.escapeText(str));
 }

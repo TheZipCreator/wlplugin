@@ -86,7 +86,7 @@ public class MiscCommand implements CommandExecutor {
         	p.sendMessage(Utils.escapeText("&_p* &_eYour selection is empty. Use /wlmisc select to create a selection first."));
 					break;
 				}
-				int[] size = pd.selectionSize();
+				Integer[] size = pd.selectionSize();
 				if(size[0]*size[1]*size[2] > 10000) {
         	p.sendMessage(Utils.escapeText("&_p* &_eMaximum volume of a compactified structure is 10000."));
 					break;

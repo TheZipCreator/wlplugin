@@ -74,15 +74,15 @@ class WlPlugin : JavaPlugin() {
 		ChatModule(), PlotModule(), GameModule(), SchemaModule(), DiscordModule(), CodeModule(), ItemModule(), MiscModule()
 	);
 	
-	object TestCommand : ModuleCommand {
+	// object TestCommand : ModuleCommand {
 
-		override val name = "wltest";
-		override val clazz = TestCommand::class;
+	// 	override val name = "wltest";
+	// 	override val clazz = TestCommand::class;
 
-		@SubCommand(["t", "thank"], "Says thank you to a player.") fun greet(@CommandPlayer p: Player, target: String, vararg reason: String) {
-			Utils.sendMessage("global", "${p.name} says: Thank you, $target${if(reason.size == 0) "" else " for ${reason.joinToString(" ")}"}!");
-		}
-	}
+	// 	@SubCommand(["t", "thank"], "Says thank you to a player.") fun greet(@CommandPlayer p: Player, target: String, vararg reason: String) {
+	// 		Utils.sendMessage("global", "${p.name} says: Thank you, $target${if(reason.size == 0) "" else " for ${reason.joinToString(" ")}"}!");
+	// 	}
+	// }
 
 	override fun onEnable() {
 		instance = this;
@@ -98,7 +98,7 @@ class WlPlugin : JavaPlugin() {
 		Data.onEnable();
 		for(m in modules)
 			m.onEnable();
-		TestCommand.register();
+		// TestCommand.register();
 		// add autosave every 30 min
 		object : BukkitRunnable() {
 			override fun run() {
