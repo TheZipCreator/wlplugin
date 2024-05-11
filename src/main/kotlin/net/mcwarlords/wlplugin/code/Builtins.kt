@@ -214,7 +214,7 @@ private inline fun <reified T : Enum<T>> Value.toEnum(loc: Location): T {
 }
 
 private fun potionTypeFromValue(loc: Location, v: Value): PotionEffectType =
-	PotionEffectType.getByName(v.toString().uppercase().replace('-', '_')) ?: throw ExecutionException(loc, "Invalid potion effect type '$v'");
+	Bukkit.getRegistry(PotionEffectType::class.java)!!.get(NamespacedKey(NamespacedKey.MINECRAFT, v.toString().replace('-', '_'))) ?: throw ExecutionException(loc, "Invalid potion effect type '$v'");
 
 
 private fun itemBuiltin(name: String, argc: Int, fn: (loc: Location, item: ItemStack, meta: ItemMeta, args: List<Value>) -> Value?): Builtin {

@@ -87,6 +87,7 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 * wlchat: Rejoining will automatically show global again
 * wlcode: Added `selection`, `perlin`, `location-x`, `location-y`, and `location-z` builtins
 * wlcode: Fixed unhandled exception when an invalid expression is placed in a global declare.
-## ?
+## 1.7.6
+* Updated to 1.20.4
 * wlchat: Fixed bug where `/wlchat ignore` will cause a NullPointerException if the player being ignored does not exist.
 * wlchat: Fixed bug where `/wlchat discordignore` did not work with users who migrated to usernames

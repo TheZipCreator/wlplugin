@@ -86,6 +86,7 @@ interface CEntityEvent : CEvent {
 
 // interface for a click event
 abstract class CClickEvent(private val impl: PlayerInteractEvent, override val name: String) : CPlayerEvent, CCancellable, CLocationEvent, CItemEvent {
+	// TODO: change this to not use deprecated functions
 	override var cancelled
 		get() = impl.isCancelled()
 		set(b) = impl.setCancelled(b);

@@ -133,7 +133,7 @@ object Utils {
 	}
 
 	private data class Color(val code: String, val r: Int, val g: Int, val b: Int);
-	/** similar to escapeText, except it changes it to ANSII escape sequences */
+	/** similar to escapeText, except it changes it to ANSI escape sequences */
 	@JvmStatic @JvmOverloads fun escapeTextAnsi(txt: String, defaultColor: String = "&f"): String {
 		return escapeTextImpl(txt, defaultColor, object : ColorTranslator {
 			override fun translate(color: Char) = when(color) {
@@ -313,7 +313,13 @@ object Utils {
 
 	/** Sends a message to all people in a given channel */
 	@JvmStatic fun sendMessage(channel: String, message: String, sender: Player? = null) {
-		val default = if(sender == null) "&f" else Data.getPlayerData(sender).prefix;
+		val default = if(sender == null) "&f" else run {
+			val v = sender.data.prefix;
+			if(v == "")
+				"&f"
+			else
+				v
+		};
 		if(channel.equals("global")) {
 			for(p in Bukkit.getOnlinePlayers()) {
 				val pd = Data.getPlayerData(p);
