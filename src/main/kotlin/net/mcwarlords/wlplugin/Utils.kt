@@ -369,6 +369,8 @@ object Utils {
 			else
 				v
 		};
+		if(channel == "global")
+			DiscordModule.message(message);
 		for(p in Bukkit.getOnlinePlayers()) {
 			val pd = Data.getPlayerData(p);
 			// don't show if not desired
