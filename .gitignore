@@ -7,5 +7,6 @@ build/
 bin/
 buildcopy.bat
 buildcopy
+.wip/
 # I don't know why this dir even exists
 .metals/

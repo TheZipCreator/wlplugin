@@ -91,3 +91,9 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 * Updated to 1.20.4
 * wlchat: Fixed bug where `/wlchat ignore` will cause a NullPointerException if the player being ignored does not exist.
 * wlchat: Fixed bug where `/wlchat discordignore` did not work with users who migrated to usernames
+## 1.7.7
+* wlchat: Combined `/wlchat hideglobal` and `/wlchat showglobal` into one command: `/wlchat toggleglobal`.
+* wlchat: Added `/wlchat autoglobal`, which, if enabled, automatically joins global and shows global chat when you join.
+* wlchat: Channels other than global now have a random color assigned to them.
+* wlchat: When a player is mentioned in chat, an XP sound is now played. (This can be toggled with `/wlchat toggleping`)
+* wldiscord: Message sent by `/panda` command now uses usernames instead of legacy discord discriminators.

@@ -31,9 +31,12 @@ interface SimpleModule : Module {
 		WlPlugin.info("$name disabled.");
 	}
 	
-	fun enabled(); /** Called on enabled */
-	fun disabled(); /** Called on disabled */
-	fun registerFields(); /** Fields should be registered here. */
+	/** Called on enabled */
+	fun enabled(); 	
+	/** Called on disabled */
+	fun disabled(); 
+	/** Fields should be registered here. */
+	fun registerFields(); 
 
 }
 
@@ -44,7 +47,8 @@ fun SubCommand.permission(name: String) = "wlplugin.$name.${names.maxBy { it.len
 
 interface ModuleCommand : CommandExecutor {
 	val name: String;
-	val clazz: KClass<*>; /** Must be set to the current class */
+	/** Must be set to the current class */
+	val clazz: KClass<*>; 
 	
 	private inline fun forEachSubcommand(cb: (SubCommand, KFunction<*>) -> Unit) {
 		// one liner!

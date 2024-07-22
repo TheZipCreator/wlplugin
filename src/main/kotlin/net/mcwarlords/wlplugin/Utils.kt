@@ -22,6 +22,8 @@ import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.*;
 
 import kotlin.math.*;
+import kotlin.random.*;
+import kotlin.text.*;
 
 object Utils {
 	init {
@@ -311,8 +313,55 @@ object Utils {
 		return item;
 	}
 
+	/** Converts a string to a hex color */
+	@JvmStatic fun hexColorOf(str: String): String {
+		val rng = Random(str.hashCode());
+		val h = rng.nextDouble();
+		val s = rng.nextDouble(0.5, 1.0); 
+		val v = 1.0;
+		// convert HSV to RGB
+		val c = v*s
+		val hprime = h/(1.0/6.0);
+		val x = c*(1.0-abs(hprime%2.0-1.0))
+		
+		var r = 0.0
+		var g = 0.0
+		var b = 0.0
+		when(hprime) {
+			in 0.0..<1.0 -> {
+				r = c;
+				g = x;
+			}
+			in 1.0..<2.0 -> {
+				r = x;
+				g = c;
+			}
+			in 2.0..<3.0 -> {
+				g = c;
+				b = x;
+			}
+			in 3.0..<4.0 -> {
+				g = x;
+				b = c;
+			}
+			in 4.0..<5.0 -> {
+				r = x;
+				b = c;
+			}
+			else -> {
+				r = c;
+				b = x;
+			}
+		}
+		// convert to hex
+		val hr = (255*r).toInt();
+		val hg = (255*g).toInt();
+		val hb = (255*b).toInt();
+		return "%02x%02x%02x".format(hr, hg, hb);
+	}
+
 	/** Sends a message to all people in a given channel */
-	@JvmStatic fun sendMessage(channel: String, message: String, sender: Player? = null) {
+	@JvmStatic fun sendMessage(channel: String, message: String, sender: Player? = null, originalMessage: String? = null) {
 		val default = if(sender == null) "&f" else run {
 			val v = sender.data.prefix;
 			if(v == "")
@@ -320,23 +369,28 @@ object Utils {
 			else
 				v
 		};
-		if(channel.equals("global")) {
-			for(p in Bukkit.getOnlinePlayers()) {
-				val pd = Data.getPlayerData(p);
-				if(!pd.hideGlobal) {
-					if(sender == null || !pd.ignored.contains(getUUID(sender)))
-						p.sendMessage(escapeText(message, default));
-				}
-			}
-			DiscordModule.message(message);
-			WlPlugin.info("[CHAT] "+escapeTextAnsi(message, default));
-			return;
-		}
 		for(p in Bukkit.getOnlinePlayers()) {
 			val pd = Data.getPlayerData(p);
-			if(pd.channel == channel && (sender == null || !pd.ignored.contains(getUUID(sender))))
-				p.sendMessage(escapeText(message, default));
+			// don't show if not desired
+			if(channel != "global") {
+				if(pd.channel != channel)
+					continue;
+			} else {
+				if(pd.hideGlobal)
+					continue;
+			}
+			if(sender != null && pd.ignored.contains(getUUID(sender)))
+				continue;
+			// do ping
+			val nick = if(pd.nick == null) null else stripColorCodes(pd.nick!!);
+			if(pd.ping && sender != p && originalMessage != null && ((if(nick == null) false else originalMessage.contains(nick)) || originalMessage.contains(p.name))) {
+				// play ping sound
+				p.playSound(p.location, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1f);
+			}
+			// do message
+			p.sendMessage(escapeText(message, default));
 		}
+		WlPlugin.info("[CHAT] "+escapeTextAnsi(message, default));
 	}
 	// for java compatibility
 	@JvmStatic fun sendMessage(channel: String, message: String) = sendMessage(channel, message, null)

@@ -88,14 +88,30 @@ object ChatCommand : ModuleCommand {
 		ChatListener.sendChat(p, "global", msg.joinToString(" "));
 	}
 
-	@SubCommand(["hg", "hideglobal"], "Hides the global chat.") fun hideGlobal(@CommandPlayer p: Player) {
-		p.data.hideGlobal = true;
-		p.sendEscaped("&_p* &_dGlobal chat is now hidden.");
+	@SubCommand(["tg", "toggleglobal"], "Toggles global chat.") fun hideGlobal(@CommandPlayer p: Player) {
+		p.data.hideGlobal = !p.data.hideGlobal;
+		if(p.data.hideGlobal)
+			p.sendEscaped("&_p* &_dGlobal chat is now hidden.");
+		else
+			p.sendEscaped("&_p* &_dGlobal chat is now shown.");
 	}
 
-	@SubCommand(["sg", "showglobal"], "Hides the global chat.") fun showGlobal(@CommandPlayer p: Player) {
-		p.data.hideGlobal = false;
-		p.sendEscaped("&_p* &_dGlobal chat is now shown.");
+	@SubCommand(["tp", "toggleping"], "Toggles ping. If enabled, when players mention you (username or nickname) you will get a ping noise.")
+	fun togglePing(@CommandPlayer p: Player) {
+		p.data.ping = !p.data.ping;
+		if(p.data.ping)
+			p.sendEscaped("&_p* &_dPing has been enabled.");
+		else
+			p.sendEscaped("&_p* &_dPing has been disabled.");
+	}
+
+	@SubCommand(["tag", "autoglobal"], "Toggles autoglobal. If enabled, you will automatically be put into global chat when you join the server.")
+	fun autoGlobal(@CommandPlayer p: Player) {
+		p.data.autoGlobal = !p.data.autoGlobal;
+		if(p.data.autoGlobal)
+			p.sendEscaped("&_p* &_dAutoglobal has been enabled.");
+		else
+			p.sendEscaped("&_p* &_dAutoglobal has been disabled.");
 	}
 
 	@SubCommand(["i", "ignore"], "Ignores a player. If they're already ignored, it unignores them") fun ignore(@CommandPlayer p: Player, name: String) {

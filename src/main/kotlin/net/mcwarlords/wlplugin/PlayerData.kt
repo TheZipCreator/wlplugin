@@ -16,6 +16,8 @@ public class PlayerData(val uuid: String) {
 	@JvmField val ignored = mutableSetOf<String>();
 	@JvmField var discordIgnored = mutableSetOf<String>();
 	@JvmField var subscribed = mutableSetOf<String>(); // subscribed code units
+	@JvmField var autoGlobal = true;
+	@JvmField var ping = true;
 	// not saved //
 	// general
 	@JvmField var inputCB: ((String) -> Unit)? = null;
@@ -42,6 +44,10 @@ public class PlayerData(val uuid: String) {
 				nick = obj.get("nick")!! as String;
 			if(obj.containsKey("plots"))
 				plots = Utils.asInt(obj.get("plots")!!);
+			if(obj.containsKey("autoGlobal"))
+				autoGlobal = obj.get("autoGlobal")!! as Boolean;
+			if(obj.containsKey("ping"))
+				autoGlobal = obj.get("ping")!! as Boolean;
 			if(obj.containsKey("ignored")) {
 				val arr = obj.get("ignored")!! as JSONArray;
 				for(o in arr)
@@ -66,6 +72,8 @@ public class PlayerData(val uuid: String) {
 		if(nick != null)
 			obj.put("nick", nick);
 		obj.put("plots", plots);
+		obj.put("autoGlobal", autoGlobal);
+		obj.put("ping", ping);
 		run {
 			val arr = JSONArray();
 			for(s in ignored)

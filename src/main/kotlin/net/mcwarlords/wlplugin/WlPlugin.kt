@@ -71,7 +71,7 @@ class WlPlugin : JavaPlugin() {
 	}	
 
 	var modules = mutableListOf<Module>(
-		ChatModule(), PlotModule(), GameModule(), SchemaModule(), DiscordModule(), CodeModule(), ItemModule(), MiscModule()
+		ChatModule(), PlotModule(), GameModule(), SchemaModule(), DiscordModule, CodeModule(), ItemModule(), MiscModule()
 	);
 	
 	// object TestCommand : ModuleCommand {
