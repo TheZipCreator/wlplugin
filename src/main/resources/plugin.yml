@@ -1,6 +1,6 @@
 main: net.mcwarlords.wlplugin.WlPlugin
 name: wlplugin
-version: 1.7.6
+version: 1.7.7
 api-version: 1.20
 commands:
   wlchat:
