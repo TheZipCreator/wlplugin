@@ -346,8 +346,8 @@ class Executor(val scope: UInt, val ctx: ExecutorContext, var vartable: MutableM
 			is Tree.Set -> {
 				if(!vartable.containsKey(tree.name))
 					throw ExecutionException(tree.loc, "Unknown variable ${tree.name}. Did you mean to use DECLARE?");
-				val v = vartable[tree.name]!!.value;
-				vartable[tree.name]!!.value = eval(tree.value);
+				val v = eval(tree.value);
+				vartable[tree.name]!!.value = v;
 				return v;
 			}
 			is Tree.Return -> throw Return(tree.loc, eval(tree.value));

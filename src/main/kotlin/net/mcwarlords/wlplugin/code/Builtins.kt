@@ -375,11 +375,17 @@ internal val builtins = mapOf<String, Builtin>(
 					ret.add(Value.Loc(Location(locs[0].world, x.toDouble(), y.toDouble(), z.toDouble())));
 		Value.List(ret)
 	},
+	"clear-inventory" to { _, loc, args ->
+		argsEqual(loc, args, "clear-inventory", 1);
+		val player = args[0].getPlayer(loc);
+		runTask { player.inventory.clear(); }
+		Value.Unit
+	},
 	// entity actions
 	// teleports an entity
 	"teleport" to { _, loc, args ->
 		argsEqual(loc, args, "teleport", 2);
-		args[0].getEntity(loc).teleport(args[1].getLocation(loc));
+		runTask { args[0].getEntity(loc).teleport(args[1].getLocation(loc)); }
 		Value.Unit
 	},
 	// spawns an entity. returns the entity spawned.
@@ -432,7 +438,7 @@ internal val builtins = mapOf<String, Builtin>(
 	// gets the location of an entity
 	"location-of" to { _, loc, args ->
 		argsEqual(loc, args, "location-of", 1);
-		Value.Loc(args[0].getEntity(loc).location)
+		Value.Loc(bukkitCall { args[0].getEntity(loc).location })
 	},
 	"kill" to { _, loc, args ->
 		argsEqual(loc, args, "kill", 1);
@@ -443,15 +449,17 @@ internal val builtins = mapOf<String, Builtin>(
 			runTask { entity.remove() }
 		Value.Unit
 	},
-	"entity-get-armor" to fn@ { _, loc, args ->
+	"entity-get-armor" to { _, loc, args ->
 		argsEqual(loc, args, "entity-get-armor", 1);
 		val entity = args[0].getEntity(loc);
 		if(entity !is LivingEntity)
 			throw CodeException(loc, "Can not get armor from entity of type '${entity.type.lispCase()}'.");
-		val eq = entity.equipment;
-		if(eq == null)
-			return@fn Value.List(MutableList(4) { Value.Item(ItemStack(Material.AIR)) });
-		Value.List(eq.armorContents.map { Value.Item(it) }.toMutableList())
+		bukkitCall call@{
+			val eq = entity.equipment;
+			if(eq == null)
+				return@call Value.List(MutableList(4) { Value.Item(ItemStack(Material.AIR)) });
+			Value.List(eq.armorContents.map { Value.Item(it) }.toMutableList())
+		}
 	},
 	"entity-set-armor" to { _, loc, args ->
 		argsEqual(loc, args, "entity-set-armor", 2);
@@ -485,6 +493,20 @@ internal val builtins = mapOf<String, Builtin>(
 	"!" to { _, loc, args ->
 		argsEqual(loc, args, "!", 1);
 		Value.Bool(!args[0].truthy());
+	},
+	"&" to fn@{ _, _, args ->
+		for(arg in args) {
+			if(!arg.truthy())
+				return@fn Value.Bool(false);
+		}
+		Value.Bool(true);
+	},
+	"|" to fn@{ _, _, args ->
+		for(arg in args) {
+			if(arg.truthy())
+				return@fn arg;
+		}
+		Value.Bool(false);
 	},
 	// numeric actions
 	// gets a random float between 0 and 1
@@ -605,6 +627,17 @@ internal val builtins = mapOf<String, Builtin>(
 			if(v == item)
 				return@fn Value.Bool(true);
 		Value.Bool(false)
+	},
+	// gets the index of a value. Returns Unit if not found
+	"index-of" to { _, loc, args ->
+		argsEqual(loc, args, "index-of", 2);
+		val list = args[0].getList(loc);
+		val value = args[1];
+		val idx = list.indexOf(value);
+		if(idx == -1)
+			Value.Unit
+		else
+			Value.Number(idx.toDouble());
 	},
 	// map operations
 	// get a map value

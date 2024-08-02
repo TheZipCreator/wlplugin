@@ -97,3 +97,11 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 * wlchat: Channels other than global now have a random color assigned to them.
 * wlchat: When a player is mentioned in chat, an XP sound is now played. (This can be toggled with `/wlchat toggleping`)
 * wldiscord: Message sent by `/panda` command now uses usernames instead of legacy discord discriminators.
+## 1.7.8
+* wlcode: Added `clear-inventory`.
+* wlcode: Added `index-of`.
+* wlcode: Added `&`.
+* wlcode: Added `|`.
+* wlcode: Changed `set` to return the new value of the variable, not the old one.
+* wlcode: Fixed bug where calling `teleport`, `location-of`, or `entity-get-armor`,  from a non-synchronous event could cause an error.
+
