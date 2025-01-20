@@ -75,7 +75,13 @@ interface ModuleCommand : CommandExecutor {
 						continue;
 					val cn = param.findAnnotation<CommandName>();
 					val name = if(cn == null) param.name else cn.name;
-					if(param.isOptional)
+					val klass = param.type.classifier;
+					if(klass != null && klass is KClass<*> && klass.isSubclassOf(Enum::class)) {
+						append(if(param.isOptional) " [" else " <");
+						append(klass.java.enumConstants.map { (it as Enum<*>).name.lowercase() }.joinToString(" | "));
+						append(if(param.isOptional) "]" else ">");
+					}
+					else if(param.isOptional)
 						append(" [$name]");
 					else if(param.isVararg)
 						append(" [$name...]");
@@ -86,6 +92,10 @@ interface ModuleCommand : CommandExecutor {
 			};
 			p.sendMessage(Utils.escapeText(msg));
 		}
+	}
+
+	fun complete(args: Array<String>): MutableList<String> {
+		return mutableListOf();
 	}
 
 	fun invalidArguments(p: Player) {
@@ -127,11 +137,21 @@ interface ModuleCommand : CommandExecutor {
 						try {
 							return a.toFloat();
 						} catch(e: NumberFormatException) {
-							p.sendMessage(Utils.escapeText("&_p* &_dInvalid float."));
+							p.sendEscaped("&_p* &_dInvalid float.");
 							return null;
 						}
 					}
-					else -> throw Exception("Invalid type '$type' for argument of subcommand '${func.name}'")
+					else -> { 
+						val klass = type.classifier;
+						if(klass != null && klass is KClass<*> && klass.isSubclassOf(Enum::class)) {
+							for(const in klass.java.enumConstants) {
+								if((const as Enum<*>).name.equals(a, ignoreCase = true))
+									return const;
+							}
+							p.sendEscaped("&_p* &_dInvalid option '$a'.");
+						}
+						throw Exception("Invalid type '$type' for argument of subcommand '${func.name}'")
+					}
 				}
 			}
 			for(param in func.parameters) {
@@ -189,7 +209,17 @@ interface ModuleCommand : CommandExecutor {
 			override fun onTabComplete(sender: CommandSender, command: Command, label: String, args: Array<String>): MutableList<String> {
 				if(args.size == 1)
 					return argList;
-				return mutableListOf();
+				forEachSubcommand { ann, func ->
+					if(ann.names.contains(args[0])) {
+						if(args.size >= func.parameters.size)
+							return complete(args);
+						val klass = func.parameters[args.size].type.classifier;
+						if(klass != null && klass is KClass<*> && klass.isSubclassOf(Enum::class))
+							return klass.java.enumConstants.map { (it as Enum<*>).name.lowercase() }.toMutableList();
+						return complete(args);
+					}
+				}
+				return complete(args);
 			}
 		});
 	}
