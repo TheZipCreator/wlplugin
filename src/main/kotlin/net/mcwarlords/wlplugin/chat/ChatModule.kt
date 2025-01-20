@@ -35,6 +35,7 @@ class ChatModule : SimpleModule {
 				}
 			});
 		}
+		WlPlugin.info("wlchat enabled");
 	}
 
 	override fun disabled() {
