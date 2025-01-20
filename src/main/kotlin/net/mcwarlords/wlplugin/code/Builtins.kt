@@ -270,7 +270,7 @@ internal val builtins = mapOf<String, Builtin>(
 		}
 		runTask {
 			for(item in items)
-				player.inventory.addItem(item); 
+				player.inventory.remove(item); 
 		};
 		Value.Unit
 	},

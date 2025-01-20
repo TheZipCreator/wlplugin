@@ -105,7 +105,7 @@ class CodeUnit(val location: Location, val name: String, val owner: String) {
 	fun handleEvent(e: CEvent, sync: Boolean = e is CCancellable) {
 		if(!events.containsKey(e.name))
 			return;
-		var exec = Executor(1u, ExecutorContext(this, e, Instant.now(), if(sync) 10000 else -1), globals);
+		var exec = Executor(1u, ExecutorContext(this, e, Instant.now(), if(sync) 10000 else -1), globals.toMutableMap());
 		exec.run(events[e.name]!!, true, sync);
 		executors.add(exec);
 		return;
