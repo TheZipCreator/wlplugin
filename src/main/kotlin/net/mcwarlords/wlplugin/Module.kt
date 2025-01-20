@@ -63,8 +63,8 @@ interface ModuleCommand : CommandExecutor {
 	}
 
 	fun sendHelpMessage(p: Player) {
-    p.sendMessage(Utils.escapeText("&_s======[ &_e${name.uppercase()} &_s]======"));
-    p.sendMessage(Utils.escapeText("&_p/wlcode h | help &_s- &_dDisplays this help information."));
+    p.sendEscaped("&_s======[ &_e${name.uppercase()} &_s]======");
+    p.sendEscaped("&_p/wlcode h | help &_s- &_dDisplays this help information.");
 		forEachSubcommand { ann, func ->
 			val msg = buildString {
 				append("&_p/$name ${ann.names.joinToString(" | ")}");
@@ -90,7 +90,7 @@ interface ModuleCommand : CommandExecutor {
 				}
 				append("&_s - &_d${ann.description}");
 			};
-			p.sendMessage(Utils.escapeText(msg));
+			p.sendEscaped(msg);
 		}
 	}
 
@@ -99,7 +99,7 @@ interface ModuleCommand : CommandExecutor {
 	}
 
 	fun invalidArguments(p: Player) {
-		p.sendMessage(Utils.escapeText("&_p* &_dInvalid arguments."));
+		p.sendEscaped("&_p* &_dInvalid arguments.");
 	}
 
   override fun onCommand(p: CommandSender, command: Command, label: String, args: Array<String>): Boolean {
@@ -115,7 +115,7 @@ interface ModuleCommand : CommandExecutor {
 			if(ann.names.firstOrNull { it == args[0] } == null)
 				return@forEachSubcommand;
 			if(!p.hasPermission(ann.permission(name))) {
-				p.sendMessage(Utils.escapeText("&_p* &_eYou do not have the required permission to run this command!"));
+				p.sendEscaped("&_p* &_eYou do not have the required permission to run this command!");
 				return false;
 			}
 			val map = mutableMapOf<KParameter, Any?>();
@@ -129,7 +129,7 @@ interface ModuleCommand : CommandExecutor {
 						try {
 							return a.toInt();
 						} catch(e: NumberFormatException) {
-							p.sendMessage(Utils.escapeText("&_p* &_dInvalid integer."));
+							p.sendEscaped("&_p* &_dInvalid integer.");
 							return null;
 						}
 					}
@@ -196,7 +196,7 @@ interface ModuleCommand : CommandExecutor {
 			func.callBy(map);
 			return true;
 		};
-		p.sendMessage(Utils.escapeText("&_p* &_eInvalid subcommand."));
+		p.sendEscaped("&_p* &_eInvalid subcommand.");
 		return true;
 	}
 
