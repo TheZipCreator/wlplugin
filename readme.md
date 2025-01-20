@@ -105,6 +105,7 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 * wlcode: Changed `set` to return the new value of the variable, not the old one.
 * wlcode: Fixed bug where calling `teleport`, `location-of`, or `entity-get-armor`,  from a non-synchronous event could cause an error.
 ## 1.7.9
+* Updated to 1.21.3
 * wlcode: Fixed bug where `remove-item` actually adds items and not removes them.
 * wlcode: Fixed bug where using `DECLARE` in an event outside of any other scopes would create a global variable.
 * wlgame: Add extra command completions, and shorthand for properties.
