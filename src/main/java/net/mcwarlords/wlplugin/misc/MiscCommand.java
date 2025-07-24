@@ -53,6 +53,9 @@ public class MiscCommand implements CommandExecutor {
         }
         int sum = 0;
         String msg = "&_p* &_e"+count+"d"+faces+"&_d: ";
+				if(channel != null) {
+					msg = "&_p* &_d"+p.getName()+" rolled:\n"+msg;
+				}
         for(int i = 0; i < count; i++) {
           int r = WlPlugin.rand.nextInt(faces)+1;
           msg += r+" ";

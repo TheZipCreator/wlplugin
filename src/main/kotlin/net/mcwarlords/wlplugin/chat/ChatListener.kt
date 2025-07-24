@@ -31,7 +31,7 @@ object ChatListener : Listener {
 	
 	fun sendChat(p: Player, channel: String, msg: String, pd: PlayerData = p.data) {
 		val preFormat = buildString {
-			append("&${if(channel == "global") "a" else "#"+Utils.hexColorOf(channel) }$channel");
+			append("${Utils.channelColor(channel)}$channel");
 			if(Data.lockedChannels.containsKey(channel))
 				append(" &4X");
 			append(" &8| &7${if(pd.nick == null) p.name else pd.nick}");

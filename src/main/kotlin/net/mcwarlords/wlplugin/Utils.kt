@@ -134,6 +134,10 @@ object Utils {
 		});
 	}
 
+	/** Unescapes text. */
+	// TODO: replace &x patterns with &#
+	@JvmStatic fun unescapeText(txt: String) = txt.replace("§", "&");
+
 	private data class Color(val code: String, val r: Int, val g: Int, val b: Int);
 	/** similar to escapeText, except it changes it to ANSI escape sequences */
 	@JvmStatic @JvmOverloads fun escapeTextAnsi(txt: String, defaultColor: String = "&f"): String {
@@ -440,7 +444,11 @@ object Utils {
 
 	/** Gets the width of a character */
 	@JvmStatic fun charWidth(c: Char) = if(c < 32.toChar() || c > 126.toChar()) 8 else charWidths[c.code-32]
+	
+	/** Gets the color of a channel */
+	@JvmStatic fun channelColor(channel: String) = if(channel == "global") "&a" else "&#"+hexColorOf(channel);
 }
+
 
 fun Player.sendEscaped(str: String) {
 	this.sendMessage(Utils.escapeText(str));

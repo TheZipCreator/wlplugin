@@ -84,6 +84,12 @@ object ChatCommand : ModuleCommand {
 		p.sendEscaped("&_p* &_dSuccessfully locked channel.");
 	}
 
+	@SubCommand(["li", "list"], "Lists all players in the specified channel (or your current channel if none specified)") fun list(@CommandPlayer p: Player, channel: String = "") {
+		val c = if(channel == "") p.data.channel else channel;
+		val players = Utils.playersInChannel(c).map { it.getName() }.joinToString(", ");
+		p.sendEscaped("&_p* &_dPlayers in channel ${Utils.channelColor(c)}&_d: ${players}");
+	}
+
 	@SubCommand(["g", "global"], "Sends a message in global chat.") fun global(@CommandPlayer p: Player, vararg msg: String) {
 		ChatListener.sendChat(p, "global", msg.joinToString(" "));
 	}

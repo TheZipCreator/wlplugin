@@ -18,8 +18,10 @@ public class ItemCommand implements CommandExecutor {
     p.sendMessage(Utils.escapeText("&_p/wlitem h | help &_s- &_dDisplays this help information."));
     p.sendMessage(Utils.escapeText("&_p/wlitem n | rename &_e<name> &_s- &_dRenames an item to a new name."));
     p.sendMessage(Utils.escapeText("&_p/wlitem l | setlore &_e<line> <name> &_s- &_dSets a specific line of lore to something."));
+    p.sendMessage(Utils.escapeText("&_p/wlitem i | insertlore &_e<line> <name> &_s- &_dInserts a line of lore."));
     p.sendMessage(Utils.escapeText("&_p/wlitem a | addlore &_e<name> &_s- &_dAppends lore to an item."));
     p.sendMessage(Utils.escapeText("&_p/wlitem r | rmlore &_e[line] &_s- &_dRemoves a given lore line. If no line is specified, it removes all lines."));
+    p.sendMessage(Utils.escapeText("&_p/wlitem t | transferlore &_s- &_dTransfers the lore of an item in your off hand to one in your main hand."));
     p.sendMessage(Utils.escapeText("&_p/wlitem hf | hideflags &_s- &_dHides all flags."));
     p.sendMessage(Utils.escapeText("&_p/wlitem sf | showflags &_s- &_dShows all flags."));
     p.sendMessage(Utils.escapeText("&_p/wlitem u | unsign &_s- &_dUnsigns a book."));
@@ -57,12 +59,16 @@ public class ItemCommand implements CommandExecutor {
         return true;
       case "n":
       case "rename":
+				if(im == null)
+					return true;
         im.setDisplayName(getText.apply(1));
         p.sendMessage(Utils.escapeText("&_p* &_dItem successfully renamed."));
         break;
       case "l":
       case "relore":
       case "setlore":
+				if(im == null)
+					return true;
         if(args.length <= 1) {
           p.sendMessage(invalidArguments);
           return true;
@@ -84,8 +90,40 @@ public class ItemCommand implements CommandExecutor {
           return true;
         }
         break;
+			case "i":
+			case "inlore":
+			case "insertlore":
+				if(im == null)
+					return true;
+        if(args.length <= 1) {
+          p.sendMessage(invalidArguments);
+          return true;
+        }
+        try {
+          int l = Integer.valueOf(args[1])-1;
+          List<String> lore = im.getLore();
+          if(l < 0)
+            break;
+          if(lore == null)
+            lore = new ArrayList<String>();
+					if(lore.size() < l) {
+						p.sendMessage(Utils.escapeText("&_p* &_eCannot insert past end of lore."));
+						return true;
+					}
+          while(lore.size() <= l)
+            lore.add("");
+          lore.add(l, getText.apply(2));
+          im.setLore(lore);
+          p.sendMessage(Utils.escapeText("&_p* &_dLore successfully inserted into item."));
+        } catch(NumberFormatException e) {
+          p.sendMessage(Utils.escapeText("&_p* &_eInvalid number "+args[1]+"."));
+          return true;
+        }
+        break;
       case "a":
       case "addlore": {
+				if(im == null)
+					return true;
         List<String> lore = im.getLore();
         if(lore == null)
           lore = new ArrayList<String>();
@@ -96,6 +134,8 @@ public class ItemCommand implements CommandExecutor {
       }
       case "r":
       case "rmlore":
+				if(im == null)
+					return true;
         if(args.length <= 1) {
           im.setLore(new ArrayList<String>());
           p.sendMessage(Utils.escapeText("&_p* &_dLore successfully removed."));
@@ -114,13 +154,27 @@ public class ItemCommand implements CommandExecutor {
           return true;
         }
         break;
+			case "t":
+			case "transferlore": {
+				ItemStack tis = p.getInventory().getItemInOffHand();
+				ItemMeta tim = tis.getItemMeta();
+				if(tim == null || im == null)
+					return true;
+				im.setLore(tim.getLore());
+				break;
+			}
+
       case "hf":
       case "hideflags":
+				if(im == null)
+					return true;
         im.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_DESTROYS, ItemFlag.HIDE_DYE, ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_PLACED_ON, ItemFlag.HIDE_POTION_EFFECTS, ItemFlag.HIDE_UNBREAKABLE);
         p.sendMessage(Utils.escapeText("&_p* &_dFlags hidden."));
         break;
       case "sf":
       case "showflags":
+				if(im == null)
+					return true;
         im.removeItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_DESTROYS, ItemFlag.HIDE_DYE, ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_PLACED_ON, ItemFlag.HIDE_POTION_EFFECTS, ItemFlag.HIDE_UNBREAKABLE);
         p.sendMessage(Utils.escapeText("&_p* &_dFlags shown."));
         break;
@@ -141,6 +195,8 @@ public class ItemCommand implements CommandExecutor {
       }
       case "ub":
       case "unbreakable":
+				if(im == null)
+					return true;
         im.setUnbreakable(!im.isUnbreakable());
         p.sendMessage(Utils.escapeText("&_p* &_dSet unbreakable to "+im.isUnbreakable()+"."));
         break;

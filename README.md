@@ -109,3 +109,13 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 * wlcode: Fixed bug where `remove-item` actually adds items and not removes them.
 * wlcode: Fixed bug where using `DECLARE` in an event outside of any other scopes would create a global variable.
 * wlgame: Add extra command completions, and shorthand for properties.
+## 1.7.10
+* wlitem: added `/wlitem insertlore`
+* wlitem: added `/wlitem transferlore`
+* wlitem: fix crash when trying to use wlitem commands when not holding an item
+* wlcode: added `target-block`
+* wlcode: added `play-custom-sound`
+* wlcode: added `stop-sound`
+* wlchat: added `/wlchat list`
+* wlplot: added `/wlplot wildin`
+* wlmisc: `/wlmisc rollhere` now says the name of the person who rolled

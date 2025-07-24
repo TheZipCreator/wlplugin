@@ -477,6 +477,13 @@ internal val builtins = mapOf<String, Builtin>(
 		}
 		Value.Unit
 	},
+	"target-block" to { _, loc, args ->
+		argsEqual(loc, args, "target-block", 1);
+		val entity = args[0].getEntity(loc);
+		if(entity !is LivingEntity)
+			throw CodeException(loc, "Can not get target block of entity of type '${entity.type.lispCase()}'.");
+		Value.Loc(entity.getTargetBlock(null, 5).getLocation())
+	},
 	// operators
 	"+" to operation("+", {a, b -> a+b}),
 	"-" to operation("-", {a, b -> a-b}),
@@ -870,6 +877,26 @@ internal val builtins = mapOf<String, Builtin>(
 			val player = args[4].getPlayer(loc);
 			runTask { player.playSound(l, sound, volume, pitch) }
 		}
+		Value.Unit
+	},
+	"play-custom-sound" to { _, loc, args ->
+		argsBetween(loc, args, "play-sound", 4, 5);
+		val sound = args[0].toString();
+		val l = args[1].getLocation(loc);
+		val volume = args[2].getNum(loc).toFloat();
+		val pitch = args[3].getNum(loc).toFloat();
+		if(args.size == 4)
+			runTask { l.world?.playSound(l, sound, volume, pitch) }
+		else {
+			val player = args[4].getPlayer(loc);
+			runTask { player.playSound(l, sound, volume, pitch) }
+		}
+		Value.Unit
+	},
+	"stop-sound" to { _, loc, args ->
+		argsEqual(loc, args, "stop-sound", 1);
+		val player = args[0].getPlayer(loc);
+		player.stopAllSounds();
 		Value.Unit
 	},
 	"run-command" to { exec, loc, args ->
