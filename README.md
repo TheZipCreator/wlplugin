@@ -113,6 +113,7 @@ This is a plugin for the Warlords minecraft server, a private server for me and 
 * wlitem: added `/wlitem insertlore`
 * wlitem: added `/wlitem transferlore`
 * wlitem: fix crash when trying to use wlitem commands when not holding an item
+* wlitem: `/wlitem setlore` now autocompletes to existing lore on item
 * wlcode: added `target-block`
 * wlcode: added `play-custom-sound`
 * wlcode: added `stop-sound`
