@@ -1,6 +1,8 @@
 # wlplugin
 This is a plugin for the Warlords minecraft server, a private server for me and my online friends. It contains a few modules which do various helpful things that we'd previously use other plugins for.
 
+**wlplugin is no longer developed in this repository.** It is now at sourcehut: https://sr.ht/~thezipcreator/wlplugin/
+
 # licenses
 `LICENSE` (GNU GPLv3) is for the main code
 
